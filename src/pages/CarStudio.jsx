@@ -1,12 +1,23 @@
-import React, { useState, useRef, useMemo, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useMemo, useEffect, Suspense, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, RoundedBox, ContactShadows, Environment } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
-import { Search, RotateCcw, Eye, Camera, Download, Star, ChevronDown, Recycle, DollarSign, Leaf, Weight, Zap, Info, X, Wrench, Shield, Cpu, Loader2, Sparkles } from 'lucide-react';
+import { Search, RotateCcw, Eye, Camera, Download, Star, ChevronDown, Recycle, DollarSign, Leaf, Weight, Zap, Info, X, Wrench, Shield, Cpu, Loader2, Sparkles, ImageIcon, ExternalLink } from 'lucide-react';
 import { streamVehicleSearch } from '../services/api';
+import { searchCarImages } from '../services/carImageSearch';
+import RealisticCar3D from '../components/RealisticCar3D';
 
-// ── Generate a colored car silhouette SVG as data URL ──
+// ── Real car photos from /cars/ directory ──
+const CAR_PHOTOS = {
+  'Tesla Model 3': '/cars/tesla-model-3.png',
+  'BMW i4': '/cars/bmw-i4.png',
+  'Toyota Camry Hybrid': '/cars/toyota-camry.png',
+  'Ford F-150 Lightning': '/cars/ford-f150.png',
+  'Lamborghini Urus': '/cars/lamborghini-urus.png',
+};
+
+// ── Fallback SVG generator ──
 const carSvg = (color = '#10b981', w = 400, h = 200) => {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.9"/><stop offset="100%" stop-color="${color}" stop-opacity="0.5"/></linearGradient></defs><rect width="${w}" height="${h}" fill="#1a1a2e"/><path d="M60 140 L80 100 L140 70 L260 65 L320 85 L350 110 L355 140 Z" fill="url(#g)" stroke="${color}" stroke-width="2"/><path d="M140 70 L155 45 L265 42 L280 65" fill="${color}" fill-opacity="0.3" stroke="${color}" stroke-width="1.5"/><circle cx="110" cy="145" r="22" fill="#111" stroke="#555" stroke-width="3"/><circle cx="110" cy="145" r="10" fill="#333"/><circle cx="300" cy="145" r="22" fill="#111" stroke="#555" stroke-width="3"/><circle cx="300" cy="145" r="10" fill="#333"/><line x1="345" y1="105" x2="355" y2="108" stroke="#ff4444" stroke-width="3" stroke-linecap="round"/><line x1="345" y1="112" x2="355" y2="115" stroke="#ff4444" stroke-width="3" stroke-linecap="round"/><circle cx="70" cy="108" r="5" fill="#ffee88" opacity="0.9"/></svg>`;
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -67,7 +78,7 @@ const InfoIcon = ({ tooltip }) => {
 const CAR_DATABASE = {
   'Tesla Model 3': {
     type: 'Electric Sedan', year: '2024', msrp: '$38,990',
-    get image() { return carSvg('#6366f1'); }, get thumbnail() { return carThumb('#6366f1'); },
+    get image() { return CAR_PHOTOS['Tesla Model 3']; }, get thumbnail() { return CAR_PHOTOS['Tesla Model 3']; },
     bodyColor: '#1a1a2e', accentColor: '#6366f1',
     specs: { range: '358 mi', hp: '283 hp', accel: '5.8s 0-60', weight: '1,760 kg' },
     components: [
@@ -105,7 +116,7 @@ const CAR_DATABASE = {
   },
   'BMW i4': {
     type: 'Electric Gran Coupe', year: '2024', msrp: '$52,200',
-    get image() { return carSvg('#3b82f6'); }, get thumbnail() { return carThumb('#3b82f6'); },
+    get image() { return CAR_PHOTOS['BMW i4']; }, get thumbnail() { return CAR_PHOTOS['BMW i4']; },
     bodyColor: '#0f2027', accentColor: '#3b82f6',
     specs: { range: '301 mi', hp: '335 hp', accel: '5.5s 0-60', weight: '2,125 kg' },
     components: [
@@ -140,7 +151,7 @@ const CAR_DATABASE = {
   },
   'Toyota Camry Hybrid': {
     type: 'Hybrid Sedan', year: '2024', msrp: '$28,855',
-    get image() { return carSvg('#00b894'); }, get thumbnail() { return carThumb('#00b894'); },
+    get image() { return CAR_PHOTOS['Toyota Camry Hybrid']; }, get thumbnail() { return CAR_PHOTOS['Toyota Camry Hybrid']; },
     bodyColor: '#2d3436', accentColor: '#00b894',
     specs: { range: '686 mi', hp: '225 hp', accel: '7.2s 0-60', weight: '1,665 kg' },
     components: [
@@ -156,7 +167,7 @@ const CAR_DATABASE = {
   },
   'Ford F-150 Lightning': {
     type: 'Electric Pickup', year: '2024', msrp: '$49,995',
-    get image() { return carSvg('#0ea5e9'); }, get thumbnail() { return carThumb('#0ea5e9'); },
+    get image() { return CAR_PHOTOS['Ford F-150 Lightning']; }, get thumbnail() { return CAR_PHOTOS['Ford F-150 Lightning']; },
     bodyColor: '#1e3a5f', accentColor: '#0ea5e9',
     specs: { range: '320 mi', hp: '580 hp', accel: '4.0s 0-60', weight: '2,948 kg' },
     components: [
@@ -172,7 +183,7 @@ const CAR_DATABASE = {
   },
   'Lamborghini Urus': {
     type: 'Super SUV', year: '2024', msrp: '$229,495',
-    get image() { return carSvg('#eab308'); }, get thumbnail() { return carThumb('#eab308'); },
+    get image() { return CAR_PHOTOS['Lamborghini Urus']; }, get thumbnail() { return CAR_PHOTOS['Lamborghini Urus']; },
     bodyColor: '#0a0a0a', accentColor: '#eab308',
     specs: { range: '381 mi', hp: '657 hp', accel: '3.3s 0-60', weight: '2,150 kg' },
     components: [
@@ -420,32 +431,28 @@ function FloorGrid() {
 function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
   return (
     <Canvas
-      camera={{ position: [3.5, 1.5, 3.5], fov: 40 }}
+      camera={{ position: [3.5, 1.8, 3.5], fov: 38 }}
       shadows
       style={{ background: 'transparent' }}
       gl={{
         antialias: true,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 0.85,
+        toneMappingExposure: 0.9,
         powerPreference: 'high-performance',
       }}
     >
-      <color attach="background" args={['#1a1a2e']} />
-      <fog attach="fog" args={['#1a1a2e', 8, 16]} />
+      <color attach="background" args={['#0f0f1a']} />
+      <fog attach="fog" args={['#0f0f1a', 8, 18]} />
 
-      {/* Key light */}
-      <spotLight position={[5, 8, 3]} intensity={3} angle={0.35} penumbra={0.5} castShadow shadow-mapSize={2048} />
-      {/* Fill light */}
-      <spotLight position={[-4, 6, -4]} intensity={1.5} angle={0.4} penumbra={0.6} color="#b4c6e7" />
-      {/* Rim light */}
-      <pointLight position={[-3, 2, 0]} intensity={1} color="#ff8866" />
-      {/* Accent from car color */}
-      <pointLight position={[2, 0.5, 2]} intensity={0.8} color={carData.accentColor} />
-      {/* Ambient */}
-      <ambientLight intensity={0.3} />
-      <hemisphereLight args={['#87ceeb', '#444422', 0.4]} />
+      {/* Studio lighting setup */}
+      <spotLight position={[6, 10, 4]} intensity={4} angle={0.3} penumbra={0.5} castShadow shadow-mapSize={2048} />
+      <spotLight position={[-5, 7, -5]} intensity={2} angle={0.4} penumbra={0.6} color="#b4c6e7" />
+      <pointLight position={[-3, 2.5, 0]} intensity={1.2} color="#ff8866" />
+      <pointLight position={[2, 0.5, 2]} intensity={1} color={carData.accentColor} />
+      <pointLight position={[0, 3, 0]} intensity={0.5} color="#ffffff" />
+      <ambientLight intensity={0.35} />
+      <hemisphereLight args={['#87ceeb', '#444422', 0.5]} />
 
-      {/* Controls */}
       <OrbitControls
         enablePan={false}
         enableZoom
@@ -455,11 +462,11 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
         maxPolarAngle={Math.PI / 2.1}
         target={[0, 0.3, 0]}
         autoRotate={!selectedPart && !isExploded}
-        autoRotateSpeed={0.6}
+        autoRotateSpeed={0.5}
       />
 
-      {/* The Car */}
-      <CarBody
+      {/* Realistic 3D Car with disassemblable parts */}
+      <RealisticCar3D
         bodyColor={carData.bodyColor}
         accentColor={carData.accentColor}
         isExploded={isExploded}
@@ -467,17 +474,14 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
         onSelectPart={onSelectPart}
       />
 
-      {/* Ground plane with subtle reflection */}
+      {/* Reflective ground */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#1a1a2e" metalness={0.3} roughness={0.7} />
+        <meshStandardMaterial color="#0f0f1a" metalness={0.4} roughness={0.6} />
       </mesh>
 
-      {/* Animated grid */}
       <FloorGrid />
-
-      {/* Contact shadows */}
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={10} blur={2} far={3} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={12} blur={2.5} far={3} />
     </Canvas>
   );
 }
@@ -490,6 +494,20 @@ export default function CarStudio() {
   const [dynamicCars, setDynamicCars] = useState({});
   const [isSearching, setIsSearching] = useState(false);
   const [searchStatus, setSearchStatus] = useState('');
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [loadingImages, setLoadingImages] = useState(false);
+  const [lightboxImg, setLightboxImg] = useState(null);
+
+  // Fetch real images from Wikimedia when car changes
+  useEffect(() => {
+    if (!selectedCar) return;
+    setLoadingImages(true);
+    setGalleryImages([]);
+    searchCarImages(selectedCar, 8)
+      .then(imgs => setGalleryImages(imgs))
+      .catch(() => setGalleryImages([]))
+      .finally(() => setLoadingImages(false));
+  }, [selectedCar]);
 
   const allCars = { ...CAR_DATABASE, ...dynamicCars };
   const carNames = Object.keys(allCars);
@@ -534,7 +552,8 @@ export default function CarStudio() {
     else { handleAgenticSearch(searchQuery); }
   };
   const handleSelectPart = (partName) => {
-    const car = CAR_DATABASE[selectedCar];
+    const car = allCars[selectedCar];
+    if (!car) return;
     const comp = car.components.find(c => c.name === partName || c.name.includes(partName.split(' ')[0]));
     if (comp) setSelectedComponent(comp);
   };
@@ -660,16 +679,26 @@ export default function CarStudio() {
               </div>
               <div className="shrink-0 px-4 pb-3 grid grid-cols-3 gap-3 border-t border-[#d4c5a9] bg-[#f5f0e8] pt-3">
                 <div className="bg-white/60 rounded-xl p-3 border border-[#d4c5a9]">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Vehicle Gallery</h4>
-                  <div className="flex gap-2">
-                    {carNames.filter(n => n !== selectedCar).slice(0, 3).map(name => (
-                      <div key={name} onClick={() => handleSelectCar(name)} className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 cursor-pointer hover:ring-2 ring-emerald-400">
-                        <img src={allCars[name].thumbnail} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
-                      </div>
-                    ))}
-                    <div className="w-16 h-12 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-emerald-400">
-                      <span className="text-gray-400 text-lg">+</span>
-                    </div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center gap-1">
+                    <ImageIcon className="w-3 h-3" /> Real Car Photos
+                    {loadingImages && <Loader2 className="w-3 h-3 animate-spin text-emerald-500 ml-1" />}
+                  </h4>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {/* Show real fetched images */}
+                    {galleryImages.length > 0 ? (
+                      galleryImages.slice(0, 6).map((img, i) => (
+                        <div key={i} onClick={() => setLightboxImg(img)} className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 cursor-pointer hover:ring-2 ring-emerald-400 shrink-0" title={img.title}>
+                          <img src={img.thumb} alt={img.title} className="w-full h-full object-cover" onError={(e) => { e.target.style.display='none'; }} />
+                        </div>
+                      ))
+                    ) : (
+                      /* Fallback to other car thumbnails */
+                      carNames.filter(n => n !== selectedCar).slice(0, 3).map(name => (
+                        <div key={name} onClick={() => handleSelectCar(name)} className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 cursor-pointer hover:ring-2 ring-emerald-400 shrink-0">
+                          <img src={allCars[name].thumbnail} alt={name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display='none'; }} />
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
                 <div className="bg-white/60 rounded-xl p-3 border border-[#d4c5a9]">
@@ -707,6 +736,17 @@ export default function CarStudio() {
                   <button className="mt-2 text-[10px] text-emerald-600 hover:text-emerald-700 font-medium">Open Comparison ›</button>
                 </div>
               </div>
+              {/* ── Image Lightbox ── */}
+              {lightboxImg && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center" onClick={() => setLightboxImg(null)}>
+                  <div className="relative max-w-4xl max-h-[85vh] p-2" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setLightboxImg(null)} className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg z-10 hover:bg-gray-100"><X className="w-4 h-4" /></button>
+                    <img src={lightboxImg.url || lightboxImg.thumb} alt={lightboxImg.title} className="max-w-full max-h-[80vh] rounded-xl shadow-2xl object-contain" />
+                    <p className="text-white/80 text-xs text-center mt-2 italic">{lightboxImg.title}</p>
+                    <a href={lightboxImg.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 justify-center mt-1 text-emerald-400 text-[10px] hover:text-emerald-300"><ExternalLink className="w-3 h-3" /> Open full resolution</a>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="flex-1 flex items-center justify-center">
