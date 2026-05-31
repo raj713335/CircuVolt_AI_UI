@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect, Suspense, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, RoundedBox, ContactShadows, Environment } from '@react-three/drei';
+import { OrbitControls, RoundedBox, ContactShadows, Environment, Stage } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 import { Search, RotateCcw, Eye, Camera, Download, Star, ChevronDown, Recycle, DollarSign, Leaf, Weight, Zap, Info, X, Wrench, Shield, Cpu, Loader2, Sparkles, ImageIcon, ExternalLink } from 'lucide-react';
@@ -423,7 +423,7 @@ function FloorGrid() {
   });
   return (
     <group ref={ref}>
-      <gridHelper args={[30, 60, '#444444', '#333333']} position={[0, 0, 0]} />
+      <gridHelper args={[30, 60, '#555577', '#3a3a55']} position={[0, 0, 0]} />
     </group>
   );
 }
@@ -431,27 +431,35 @@ function FloorGrid() {
 function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
   return (
     <Canvas
-      camera={{ position: [3.5, 1.8, 3.5], fov: 38 }}
+      camera={{ position: [3.5, 2.0, 3.5], fov: 36 }}
       shadows
       style={{ background: 'transparent' }}
       gl={{
         antialias: true,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 0.9,
+        toneMappingExposure: 1.4,
         powerPreference: 'high-performance',
       }}
     >
-      <color attach="background" args={['#0f0f1a']} />
-      <fog attach="fog" args={['#0f0f1a', 8, 18]} />
+      <color attach="background" args={['#111122']} />
+      <fog attach="fog" args={['#111122', 10, 22]} />
 
-      {/* Studio lighting setup */}
-      <spotLight position={[6, 10, 4]} intensity={4} angle={0.3} penumbra={0.5} castShadow shadow-mapSize={2048} />
-      <spotLight position={[-5, 7, -5]} intensity={2} angle={0.4} penumbra={0.6} color="#b4c6e7" />
-      <pointLight position={[-3, 2.5, 0]} intensity={1.2} color="#ff8866" />
-      <pointLight position={[2, 0.5, 2]} intensity={1} color={carData.accentColor} />
-      <pointLight position={[0, 3, 0]} intensity={0.5} color="#ffffff" />
-      <ambientLight intensity={0.35} />
-      <hemisphereLight args={['#87ceeb', '#444422', 0.5]} />
+      {/* Environment map for realistic metallic reflections */}
+      <Environment preset="city" />
+
+      {/* Key light - bright warm from top-right */}
+      <spotLight position={[5, 10, 5]} intensity={6} angle={0.35} penumbra={0.5} castShadow shadow-mapSize={2048} color="#fff5e6" />
+      {/* Fill light - cool blue from left */}
+      <spotLight position={[-6, 8, -4]} intensity={3} angle={0.45} penumbra={0.6} color="#c8d8f0" />
+      {/* Rim / back light */}
+      <spotLight position={[-3, 4, -6]} intensity={2.5} angle={0.5} penumbra={0.8} color="#eeddff" />
+      {/* Under-car accent glow */}
+      <pointLight position={[0, 0.1, 0]} intensity={1.5} color={carData.accentColor} distance={4} />
+      {/* Front fill */}
+      <pointLight position={[3, 1, 2]} intensity={1.5} color="#ffffff" />
+      {/* Strong ambient fill */}
+      <ambientLight intensity={0.8} />
+      <hemisphereLight args={['#b0c8f0', '#443322', 0.7]} />
 
       <OrbitControls
         enablePan={false}
@@ -465,7 +473,7 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
         autoRotateSpeed={0.5}
       />
 
-      {/* Realistic 3D Car with disassemblable parts */}
+      {/* 3D Car */}
       <RealisticCar3D
         bodyColor={carData.bodyColor}
         accentColor={carData.accentColor}
@@ -474,14 +482,14 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
         onSelectPart={onSelectPart}
       />
 
-      {/* Reflective ground */}
+      {/* Ground plane - subtle reflective */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#0f0f1a" metalness={0.4} roughness={0.6} />
+        <meshStandardMaterial color="#181828" metalness={0.5} roughness={0.5} />
       </mesh>
 
       <FloorGrid />
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.6} scale={12} blur={2.5} far={3} />
+      <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={12} blur={2.5} far={3} />
     </Canvas>
   );
 }

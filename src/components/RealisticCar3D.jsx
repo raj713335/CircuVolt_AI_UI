@@ -3,351 +3,419 @@ import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
 import * as THREE from 'three';
 
-// ── Wheel with brake caliper detail ──
-function Wheel({ position, spinning, scale = 1 }) {
+// ── Premium Wheel ──
+function Wheel({ position, spinning }) {
   const ref = useRef();
-  useFrame((s) => { if (ref.current && spinning) ref.current.rotation.x = s.clock.elapsedTime * 2; });
+  useFrame((s) => { if (ref.current && spinning) ref.current.rotation.x = s.clock.elapsedTime * 2.5; });
   return (
-    <group position={position} ref={ref} scale={scale}>
+    <group position={position} ref={ref}>
+      {/* Tire */}
       <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-        <torusGeometry args={[0.22, 0.09, 32, 64]} />
-        <meshStandardMaterial color="#1a1a1a" roughness={0.92} />
+        <torusGeometry args={[0.22, 0.085, 32, 64]} />
+        <meshStandardMaterial color="#222222" roughness={0.85} metalness={0.1} />
       </mesh>
+      {/* Rim face */}
       <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-        <cylinderGeometry args={[0.16, 0.16, 0.12, 48]} />
-        <meshPhysicalMaterial color="#c0c0c0" metalness={1} roughness={0.12} clearcoat={0.8} />
+        <cylinderGeometry args={[0.155, 0.155, 0.1, 48]} />
+        <meshStandardMaterial color="#d0d0d0" metalness={0.95} roughness={0.1} />
       </mesh>
-      {[0,1,2,3,4,5,6,7].map(i => (
-        <mesh key={i} rotation={[0, 0, Math.PI/2 + (i*Math.PI*2)/8]}>
-          <boxGeometry args={[0.012, 0.13, 0.28]} />
-          <meshPhysicalMaterial color="#e0e0e0" metalness={0.95} roughness={0.15} />
+      {/* Spoke design */}
+      {[0,1,2,3,4,5,6,7,8,9].map(i => (
+        <mesh key={i} rotation={[0, 0, Math.PI / 2 + (i * Math.PI * 2) / 10]}>
+          <boxGeometry args={[0.01, 0.12, 0.26]} />
+          <meshStandardMaterial color="#e8e8e8" metalness={0.9} roughness={0.08} />
         </mesh>
       ))}
+      {/* Hub cap */}
       <mesh rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.11, 0.11, 0.04, 32]} />
-        <meshStandardMaterial color="#444" metalness={0.9} roughness={0.3} />
+        <cylinderGeometry args={[0.04, 0.04, 0.12, 24]} />
+        <meshStandardMaterial color="#999" metalness={0.95} roughness={0.15} />
       </mesh>
+      {/* Brake disc */}
       <mesh rotation={[0, 0, Math.PI / 2]}>
-        <cylinderGeometry args={[0.04, 0.04, 0.14, 16]} />
-        <meshPhysicalMaterial color="#888" metalness={1} roughness={0.2} />
+        <cylinderGeometry args={[0.1, 0.1, 0.025, 32]} />
+        <meshStandardMaterial color="#777" metalness={0.7} roughness={0.4} />
+      </mesh>
+      {/* Red brake caliper */}
+      <mesh position={[0, -0.08, 0.05]}>
+        <boxGeometry args={[0.04, 0.06, 0.03]} />
+        <meshStandardMaterial color="#ee2233" roughness={0.4} metalness={0.3} />
       </mesh>
     </group>
   );
 }
 
-// ── Disassemblable sub-part wrapper ──
+// ── Animated part group ──
 function CarPart({ children, partName, offset = [0,0,0], disassembled, selectedPart, onSelect }) {
   const groupRef = useRef();
-  const targetPos = useRef([0, 0, 0]);
-  
-  const isSelected = selectedPart === partName;
-  const dimmed = selectedPart && !isSelected;
   const spread = disassembled ? 1 : 0;
-  
+
   useFrame(() => {
     if (!groupRef.current) return;
-    const tx = offset[0] * spread;
-    const ty = offset[1] * spread;
-    const tz = offset[2] * spread;
-    groupRef.current.position.x += (tx - groupRef.current.position.x) * 0.08;
-    groupRef.current.position.y += (ty - groupRef.current.position.y) * 0.08;
-    groupRef.current.position.z += (tz - groupRef.current.position.z) * 0.08;
+    const tx = offset[0] * spread, ty = offset[1] * spread, tz = offset[2] * spread;
+    groupRef.current.position.x += (tx - groupRef.current.position.x) * 0.06;
+    groupRef.current.position.y += (ty - groupRef.current.position.y) * 0.06;
+    groupRef.current.position.z += (tz - groupRef.current.position.z) * 0.06;
   });
 
   return (
     <group ref={groupRef} onClick={(e) => { e.stopPropagation(); onSelect(partName); }}>
-      {React.Children.map(children, child => {
-        if (!React.isValidElement(child)) return child;
-        if (child.type === 'mesh' || child.type?.name === 'mesh') {
-          return React.cloneElement(child);
-        }
-        return child;
-      })}
+      {children}
     </group>
   );
 }
 
-// ── Main Realistic Car Body ──
-export default function RealisticCar3D({ bodyColor = '#1a1a2e', accentColor = '#6366f1', isExploded, selectedPart, onSelectPart }) {
-  const op = (name) => selectedPart && selectedPart !== name ? 0.12 : 1;
+// ── Main component ──
+export default function RealisticCar3D({ bodyColor, accentColor = '#6366f1', isExploded, selectedPart, onSelectPart }) {
+  const op = (name) => selectedPart && selectedPart !== name ? 0.15 : 1;
+  // Use accentColor as visible paint - bodyColor is often too dark
+  const paintColor = accentColor || '#3b82f6';
 
   const bodyProfile = useMemo(() => {
     const s = new THREE.Shape();
-    s.moveTo(-1.35, 0.02); s.lineTo(1.35, 0.02);
-    s.quadraticCurveTo(1.4, 0.06, 1.38, 0.12);
-    s.lineTo(1.3, 0.2);
-    s.quadraticCurveTo(1.2, 0.28, 1.05, 0.3);
-    s.lineTo(0.55, 0.33);
-    s.quadraticCurveTo(0.45, 0.38, 0.4, 0.56);
-    s.lineTo(-0.15, 0.6);
-    s.quadraticCurveTo(-0.3, 0.6, -0.42, 0.55);
+    s.moveTo(-1.35, 0.02);
+    s.lineTo(1.35, 0.02);
+    s.quadraticCurveTo(1.42, 0.06, 1.4, 0.14);
+    s.lineTo(1.3, 0.22);
+    s.quadraticCurveTo(1.18, 0.3, 1.05, 0.32);
+    s.lineTo(0.55, 0.35);
+    s.quadraticCurveTo(0.45, 0.4, 0.38, 0.58);
+    s.lineTo(-0.18, 0.62);
+    s.quadraticCurveTo(-0.32, 0.62, -0.44, 0.56);
     s.lineTo(-0.72, 0.38);
-    s.quadraticCurveTo(-0.88, 0.3, -1.0, 0.28);
-    s.lineTo(-1.25, 0.22);
-    s.quadraticCurveTo(-1.38, 0.14, -1.35, 0.02);
+    s.quadraticCurveTo(-0.9, 0.3, -1.02, 0.28);
+    s.lineTo(-1.28, 0.22);
+    s.quadraticCurveTo(-1.4, 0.14, -1.35, 0.02);
     return s;
   }, []);
 
   return (
     <group>
-      {/* ─── BODY PANELS ─── */}
-      <CarPart partName="Body Panels" offset={[0, 0.5, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+      {/* ═══════ BODY PANELS ═══════ */}
+      <CarPart partName="Body Panels" offset={[0, 0.6, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        {/* Main body shell */}
         <mesh position={[0, 0.1, -0.42]} castShadow>
-          <extrudeGeometry args={[bodyProfile, { depth: 0.84, bevelEnabled: true, bevelThickness: 0.025, bevelSize: 0.025, bevelSegments: 16 }]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} clearcoatRoughness={0.02} envMapIntensity={2} transparent opacity={op('Body Panels')} />
+          <extrudeGeometry args={[bodyProfile, { depth: 0.84, bevelEnabled: true, bevelThickness: 0.03, bevelSize: 0.03, bevelSegments: 12 }]} />
+          <meshStandardMaterial color={paintColor} metalness={0.6} roughness={0.25} transparent opacity={op('Body Panels')} envMapIntensity={1.5} />
         </mesh>
-        {/* Hood crease */}
-        <mesh position={[0.85, 0.4, 0]} castShadow>
-          <boxGeometry args={[0.65, 0.004, 0.76]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.3} clearcoat={1} transparent opacity={op('Body Panels')} />
+        {/* Hood panel */}
+        <mesh position={[0.88, 0.43, 0]} castShadow>
+          <boxGeometry args={[0.55, 0.006, 0.72]} />
+          <meshStandardMaterial color={paintColor} metalness={0.65} roughness={0.2} transparent opacity={op('Body Panels')} />
         </mesh>
-        {/* Front bumper */}
-        <mesh position={[1.32, 0.1, 0]} castShadow>
-          <boxGeometry args={[0.08, 0.12, 0.78]} />
-          <meshPhysicalMaterial color="#111" metalness={0.5} roughness={0.6} transparent opacity={op('Body Panels')} />
+        {/* Front bumper lower */}
+        <mesh position={[1.34, 0.08, 0]} castShadow>
+          <boxGeometry args={[0.08, 0.1, 0.76]} />
+          <meshStandardMaterial color="#2a2a2a" metalness={0.3} roughness={0.7} transparent opacity={op('Body Panels')} />
         </mesh>
-        {/* Rear bumper */}
-        <mesh position={[-1.32, 0.1, 0]} castShadow>
-          <boxGeometry args={[0.08, 0.12, 0.78]} />
-          <meshPhysicalMaterial color="#111" metalness={0.5} roughness={0.6} transparent opacity={op('Body Panels')} />
+        {/* Rear bumper lower */}
+        <mesh position={[-1.34, 0.08, 0]} castShadow>
+          <boxGeometry args={[0.08, 0.1, 0.76]} />
+          <meshStandardMaterial color="#2a2a2a" metalness={0.3} roughness={0.7} transparent opacity={op('Body Panels')} />
         </mesh>
-        {/* Front grille */}
-        <mesh position={[1.38, 0.18, 0]}>
-          <boxGeometry args={[0.02, 0.1, 0.5]} />
-          <meshPhysicalMaterial color="#222" metalness={0.8} roughness={0.2} transparent opacity={op('Body Panels')} />
+        {/* Front grille / intake */}
+        <mesh position={[1.4, 0.16, 0]}>
+          <boxGeometry args={[0.02, 0.1, 0.48]} />
+          <meshStandardMaterial color="#1a1a1a" metalness={0.5} roughness={0.4} transparent opacity={op('Body Panels')} />
         </mesh>
-        {/* Fender flares */}
-        <mesh position={[0.78, 0.08, 0.44]} castShadow>
-          <boxGeometry args={[0.4, 0.08, 0.04]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} transparent opacity={op('Body Panels')} />
+        {/* Chrome trim along sides */}
+        <mesh position={[0, 0.28, 0.44]}>
+          <boxGeometry args={[2.2, 0.008, 0.008]} />
+          <meshStandardMaterial color="#e0e0e0" metalness={0.95} roughness={0.05} transparent opacity={op('Body Panels')} />
         </mesh>
-        <mesh position={[0.78, 0.08, -0.44]} castShadow>
-          <boxGeometry args={[0.4, 0.08, 0.04]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} transparent opacity={op('Body Panels')} />
+        <mesh position={[0, 0.28, -0.44]}>
+          <boxGeometry args={[2.2, 0.008, 0.008]} />
+          <meshStandardMaterial color="#e0e0e0" metalness={0.95} roughness={0.05} transparent opacity={op('Body Panels')} />
         </mesh>
-        <mesh position={[-0.78, 0.08, 0.44]} castShadow>
-          <boxGeometry args={[0.4, 0.08, 0.04]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} transparent opacity={op('Body Panels')} />
-        </mesh>
-        <mesh position={[-0.78, 0.08, -0.44]} castShadow>
-          <boxGeometry args={[0.4, 0.08, 0.04]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} transparent opacity={op('Body Panels')} />
-        </mesh>
+        {/* Wheel arch surrounds */}
+        {[[0.82, 0.47], [0.82, -0.47], [-0.82, 0.47], [-0.82, -0.47]].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.1, z]} castShadow>
+            <boxGeometry args={[0.42, 0.14, 0.03]} />
+            <meshStandardMaterial color={paintColor} metalness={0.6} roughness={0.25} transparent opacity={op('Body Panels')} />
+          </mesh>
+        ))}
       </CarPart>
 
-      {/* ─── INTERIOR CABIN (Glass) ─── */}
-      <CarPart partName="Interior Cabin" offset={[0, 1.4, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        <mesh position={[0.42, 0.55, 0]} rotation={[0, 0, -0.38]} castShadow>
-          <boxGeometry args={[0.38, 0.006, 0.66]} />
-          <meshPhysicalMaterial color="#88ccff" metalness={0.1} roughness={0} transmission={0.92} thickness={0.5} ior={1.52} transparent opacity={op('Interior Cabin') * 0.55} />
+      {/* ═══════ INTERIOR / GLASS ═══════ */}
+      <CarPart partName="Interior Cabin" offset={[0, 1.5, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        {/* Windshield */}
+        <mesh position={[0.4, 0.55, 0]} rotation={[0, 0, -0.38]} castShadow>
+          <boxGeometry args={[0.38, 0.005, 0.64]} />
+          <meshPhysicalMaterial color="#aaddff" metalness={0.05} roughness={0.05} transmission={0.85} thickness={0.5} ior={1.5} transparent opacity={op('Interior Cabin') * 0.65} />
         </mesh>
-        <mesh position={[0.08, 0.62, 0]}>
-          <boxGeometry args={[0.55, 0.006, 0.62]} />
-          <meshPhysicalMaterial color="#88bbee" metalness={0.1} roughness={0} transmission={0.88} thickness={0.3} transparent opacity={op('Interior Cabin') * 0.45} />
+        {/* Roof panel (glass) */}
+        <mesh position={[0.06, 0.64, 0]}>
+          <boxGeometry args={[0.52, 0.005, 0.58]} />
+          <meshPhysicalMaterial color="#99ccee" metalness={0.05} roughness={0.05} transmission={0.8} thickness={0.3} transparent opacity={op('Interior Cabin') * 0.5} />
         </mesh>
-        <mesh position={[-0.42, 0.52, 0]} rotation={[0, 0, 0.32]}>
-          <boxGeometry args={[0.32, 0.006, 0.62]} />
-          <meshPhysicalMaterial color="#88ccff" metalness={0.1} roughness={0} transmission={0.92} thickness={0.5} transparent opacity={op('Interior Cabin') * 0.55} />
+        {/* Rear window */}
+        <mesh position={[-0.44, 0.52, 0]} rotation={[0, 0, 0.32]}>
+          <boxGeometry args={[0.3, 0.005, 0.58]} />
+          <meshPhysicalMaterial color="#aaddff" metalness={0.05} roughness={0.05} transmission={0.85} thickness={0.5} transparent opacity={op('Interior Cabin') * 0.65} />
         </mesh>
-        {/* A-pillar */}
-        <mesh position={[0.28, 0.52, 0.34]} rotation={[0, 0, -0.35]}>
-          <boxGeometry args={[0.3, 0.025, 0.025]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} transparent opacity={op('Interior Cabin')} />
+        {/* Side windows */}
+        <mesh position={[0.1, 0.48, 0.37]} rotation={[Math.PI / 2, 0, 0]}>
+          <boxGeometry args={[0.65, 0.005, 0.18]} />
+          <meshPhysicalMaterial color="#bbddff" metalness={0.05} roughness={0.05} transmission={0.85} transparent opacity={op('Interior Cabin') * 0.4} />
         </mesh>
-        <mesh position={[0.28, 0.52, -0.34]} rotation={[0, 0, -0.35]}>
-          <boxGeometry args={[0.3, 0.025, 0.025]} />
-          <meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} transparent opacity={op('Interior Cabin')} />
+        <mesh position={[0.1, 0.48, -0.37]} rotation={[Math.PI / 2, 0, 0]}>
+          <boxGeometry args={[0.65, 0.005, 0.18]} />
+          <meshPhysicalMaterial color="#bbddff" metalness={0.05} roughness={0.05} transmission={0.85} transparent opacity={op('Interior Cabin') * 0.4} />
         </mesh>
-        {/* Seats inside */}
-        <mesh position={[0.15, 0.28, 0.15]}>
-          <boxGeometry args={[0.18, 0.2, 0.15]} />
-          <meshStandardMaterial color="#333" roughness={0.9} transparent opacity={op('Interior Cabin') * 0.6} />
+        {/* A-pillars */}
+        <mesh position={[0.28, 0.53, 0.35]} rotation={[0, 0, -0.35]}>
+          <boxGeometry args={[0.32, 0.03, 0.02]} />
+          <meshStandardMaterial color="#333" metalness={0.5} roughness={0.4} transparent opacity={op('Interior Cabin')} />
         </mesh>
-        <mesh position={[0.15, 0.28, -0.15]}>
-          <boxGeometry args={[0.18, 0.2, 0.15]} />
-          <meshStandardMaterial color="#333" roughness={0.9} transparent opacity={op('Interior Cabin') * 0.6} />
+        <mesh position={[0.28, 0.53, -0.35]} rotation={[0, 0, -0.35]}>
+          <boxGeometry args={[0.32, 0.03, 0.02]} />
+          <meshStandardMaterial color="#333" metalness={0.5} roughness={0.4} transparent opacity={op('Interior Cabin')} />
         </mesh>
         {/* Dashboard */}
         <mesh position={[0.45, 0.32, 0]}>
-          <boxGeometry args={[0.1, 0.08, 0.5]} />
-          <meshStandardMaterial color="#222" roughness={0.8} transparent opacity={op('Interior Cabin') * 0.6} />
+          <boxGeometry args={[0.12, 0.08, 0.52]} />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.85} transparent opacity={op('Interior Cabin') * 0.7} />
         </mesh>
-        {/* Screen */}
+        {/* Screen glow */}
         <mesh position={[0.42, 0.37, 0]}>
-          <boxGeometry args={[0.005, 0.06, 0.15]} />
-          <meshStandardMaterial color="#111" emissive="#4488ff" emissiveIntensity={0.3} transparent opacity={op('Interior Cabin') * 0.7} />
+          <boxGeometry args={[0.005, 0.06, 0.16]} />
+          <meshStandardMaterial color="#66aaff" emissive="#4488ff" emissiveIntensity={0.8} transparent opacity={op('Interior Cabin') * 0.8} />
+        </mesh>
+        {/* Seats */}
+        <mesh position={[0.12, 0.25, 0.16]}>
+          <boxGeometry args={[0.16, 0.22, 0.14]} />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.9} transparent opacity={op('Interior Cabin') * 0.6} />
+        </mesh>
+        <mesh position={[0.12, 0.25, -0.16]}>
+          <boxGeometry args={[0.16, 0.22, 0.14]} />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.9} transparent opacity={op('Interior Cabin') * 0.6} />
+        </mesh>
+        {/* Steering wheel */}
+        <mesh position={[0.35, 0.35, 0.18]} rotation={[0.3, 0, 0]}>
+          <torusGeometry args={[0.04, 0.006, 12, 24]} />
+          <meshStandardMaterial color="#222" roughness={0.7} transparent opacity={op('Interior Cabin') * 0.6} />
         </mesh>
       </CarPart>
 
-      {/* ─── CHASSIS FRAME ─── */}
-      <CarPart partName="Chassis Frame" offset={[0, -0.3, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+      {/* ═══════ CHASSIS FRAME ═══════ */}
+      <CarPart partName="Chassis Frame" offset={[0, -0.4, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
         <mesh position={[0, 0.04, 0]} castShadow>
-          <boxGeometry args={[2.75, 0.055, 0.82]} />
-          <meshStandardMaterial color="#1a1a1a" metalness={0.85} roughness={0.25} transparent opacity={op('Chassis Frame')} />
+          <boxGeometry args={[2.8, 0.055, 0.8]} />
+          <meshStandardMaterial color="#3a3a3a" metalness={0.75} roughness={0.35} transparent opacity={op('Chassis Frame')} />
         </mesh>
-        {/* Rails */}
-        <mesh position={[0, 0.06, 0.38]} castShadow>
-          <boxGeometry args={[2.4, 0.05, 0.025]} />
-          <meshPhysicalMaterial color="#282828" metalness={0.9} roughness={0.2} transparent opacity={op('Chassis Frame')} />
+        {/* Side rails */}
+        <mesh position={[0, 0.07, 0.39]} castShadow>
+          <boxGeometry args={[2.5, 0.05, 0.022]} />
+          <meshStandardMaterial color="#4a4a4a" metalness={0.8} roughness={0.25} transparent opacity={op('Chassis Frame')} />
         </mesh>
-        <mesh position={[0, 0.06, -0.38]} castShadow>
-          <boxGeometry args={[2.4, 0.05, 0.025]} />
-          <meshPhysicalMaterial color="#282828" metalness={0.9} roughness={0.2} transparent opacity={op('Chassis Frame')} />
+        <mesh position={[0, 0.07, -0.39]} castShadow>
+          <boxGeometry args={[2.5, 0.05, 0.022]} />
+          <meshStandardMaterial color="#4a4a4a" metalness={0.8} roughness={0.25} transparent opacity={op('Chassis Frame')} />
         </mesh>
-        {/* Crossmembers */}
-        {[-0.8, -0.3, 0.2, 0.7].map((x, i) => (
-          <mesh key={i} position={[x, 0.04, 0]}>
-            <boxGeometry args={[0.04, 0.04, 0.78]} />
-            <meshStandardMaterial color="#222" metalness={0.8} roughness={0.3} transparent opacity={op('Chassis Frame')} />
+        {/* Cross-members */}
+        {[-0.9, -0.4, 0.1, 0.6].map((x, i) => (
+          <mesh key={i} position={[x, 0.045, 0]}>
+            <boxGeometry args={[0.04, 0.04, 0.76]} />
+            <meshStandardMaterial color="#555" metalness={0.7} roughness={0.35} transparent opacity={op('Chassis Frame')} />
           </mesh>
         ))}
       </CarPart>
 
-      {/* ─── BATTERY PACK ─── */}
-      <CarPart partName="Battery Pack" offset={[0, -1.2, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        <RoundedBox args={[2.0, 0.12, 0.72]} radius={0.025} position={[0, -0.03, 0]} castShadow>
-          <meshPhysicalMaterial color="#6366f1" metalness={0.65} roughness={0.22} clearcoat={0.5} transparent opacity={op('Battery Pack')} />
+      {/* ═══════ BATTERY PACK ═══════ */}
+      <CarPart partName="Battery Pack" offset={[0, -1.3, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        <RoundedBox args={[2.0, 0.13, 0.7]} radius={0.025} position={[0, -0.03, 0]} castShadow>
+          <meshStandardMaterial color="#6366f1" metalness={0.5} roughness={0.3} transparent opacity={op('Battery Pack')} emissive="#4338ca" emissiveIntensity={0.15} />
         </RoundedBox>
+        {/* Cell dividers */}
         {[-0.8, -0.4, 0, 0.4, 0.8].map((x, i) => (
           <mesh key={i} position={[x, -0.03, 0]}>
-            <boxGeometry args={[0.012, 0.13, 0.73]} />
-            <meshStandardMaterial color="#4338ca" transparent opacity={op('Battery Pack') * 0.4} />
+            <boxGeometry args={[0.015, 0.14, 0.71]} />
+            <meshStandardMaterial color="#818cf8" transparent opacity={op('Battery Pack') * 0.6} />
           </mesh>
         ))}
-        {/* Battery cells visible */}
+        {/* Cell modules */}
         {[-0.6, -0.2, 0.2, 0.6].map((x, i) => (
           <mesh key={`c${i}`} position={[x, -0.025, 0]}>
-            <boxGeometry args={[0.32, 0.08, 0.6]} />
-            <meshStandardMaterial color="#5558e8" transparent opacity={op('Battery Pack') * 0.3} />
+            <boxGeometry args={[0.3, 0.09, 0.58]} />
+            <meshStandardMaterial color="#7c7cf8" transparent opacity={op('Battery Pack') * 0.35} emissive="#6366f1" emissiveIntensity={0.1} />
           </mesh>
         ))}
-        {/* Cooling lines */}
-        <mesh position={[0, -0.09, 0.3]}>
-          <cylinderGeometry args={[0.008, 0.008, 1.8, 8]} rotation={[0, 0, Math.PI / 2]} />
-          <meshStandardMaterial color="#f97316" transparent opacity={op('Battery Pack') * 0.6} />
+        {/* Orange HV connectors */}
+        <mesh position={[0.95, -0.02, 0.25]}>
+          <boxGeometry args={[0.06, 0.04, 0.04]} />
+          <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={0.3} transparent opacity={op('Battery Pack')} />
+        </mesh>
+        <mesh position={[0.95, -0.02, -0.25]}>
+          <boxGeometry args={[0.06, 0.04, 0.04]} />
+          <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={0.3} transparent opacity={op('Battery Pack')} />
         </mesh>
       </CarPart>
 
-      {/* ─── ELECTRIC MOTOR ─── */}
-      <CarPart partName="Electric Motor" offset={[-1.5, 0.5, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        <group position={[-0.95, 0.12, 0]}>
+      {/* ═══════ ELECTRIC MOTOR ═══════ */}
+      <CarPart partName="Electric Motor" offset={[-1.8, 0.6, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        <group position={[-0.95, 0.13, 0]}>
+          {/* Motor housing */}
           <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-            <cylinderGeometry args={[0.17, 0.19, 0.32, 48]} />
-            <meshPhysicalMaterial color="#ec4899" metalness={0.85} roughness={0.2} clearcoat={0.7} transparent opacity={op('Electric Motor')} />
+            <cylinderGeometry args={[0.17, 0.19, 0.34, 48]} />
+            <meshStandardMaterial color="#ec4899" metalness={0.7} roughness={0.25} transparent opacity={op('Electric Motor')} emissive="#ec4899" emissiveIntensity={0.1} />
           </mesh>
+          {/* End cap */}
           <mesh rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[0.2, 0.2, 0.04, 48]} />
-            <meshStandardMaterial color="#be185d" metalness={0.9} roughness={0.15} transparent opacity={op('Electric Motor')} />
+            <meshStandardMaterial color="#db2777" metalness={0.8} roughness={0.2} transparent opacity={op('Electric Motor')} />
           </mesh>
+          {/* Drive shaft */}
           <mesh rotation={[0, 0, Math.PI / 2]}>
-            <cylinderGeometry args={[0.025, 0.025, 0.5, 16]} />
-            <meshStandardMaterial color="#777" metalness={0.95} roughness={0.15} transparent opacity={op('Electric Motor')} />
+            <cylinderGeometry args={[0.025, 0.025, 0.55, 16]} />
+            <meshStandardMaterial color="#aaa" metalness={0.9} roughness={0.15} transparent opacity={op('Electric Motor')} />
           </mesh>
           {/* Cooling fins */}
-          {[-0.12, -0.06, 0, 0.06, 0.12].map((x, i) => (
+          {[-0.14, -0.07, 0, 0.07, 0.14].map((x, i) => (
             <mesh key={i} position={[x, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
-              <cylinderGeometry args={[0.195, 0.195, 0.008, 48]} />
-              <meshStandardMaterial color="#d946a8" metalness={0.7} transparent opacity={op('Electric Motor') * 0.5} />
+              <cylinderGeometry args={[0.195, 0.195, 0.006, 48]} />
+              <meshStandardMaterial color="#f472b6" metalness={0.6} transparent opacity={op('Electric Motor') * 0.6} />
             </mesh>
           ))}
+          {/* Copper winding hint */}
+          <mesh position={[0.18, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+            <torusGeometry args={[0.08, 0.015, 8, 24]} />
+            <meshStandardMaterial color="#b87333" metalness={0.8} roughness={0.3} transparent opacity={op('Electric Motor') * 0.7} />
+          </mesh>
         </group>
       </CarPart>
 
-      {/* ─── POWER ELECTRONICS ─── */}
-      <CarPart partName="Power Electronics" offset={[1.3, 0.8, 0.4]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+      {/* ═══════ POWER ELECTRONICS ═══════ */}
+      <CarPart partName="Power Electronics" offset={[1.5, 0.9, 0.5]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
         <group position={[0.9, 0.2, 0.22]}>
-          <RoundedBox args={[0.26, 0.1, 0.18]} radius={0.012} castShadow>
-            <meshPhysicalMaterial color="#06b6d4" metalness={0.65} roughness={0.28} clearcoat={0.4} transparent opacity={op('Power Electronics')} />
+          <RoundedBox args={[0.28, 0.11, 0.2]} radius={0.015} castShadow>
+            <meshStandardMaterial color="#06b6d4" metalness={0.55} roughness={0.3} transparent opacity={op('Power Electronics')} emissive="#06b6d4" emissiveIntensity={0.12} />
           </RoundedBox>
-          {[-0.06, 0, 0.06].map((z, i) => (
-            <mesh key={i} position={[0, 0.055, z]}>
-              <boxGeometry args={[0.24, 0.012, 0.012]} />
-              <meshStandardMaterial color="#0891b2" metalness={0.75} transparent opacity={op('Power Electronics')} />
+          {/* Heat sink fins */}
+          {[-0.07, -0.035, 0, 0.035, 0.07].map((z, i) => (
+            <mesh key={i} position={[0, 0.06, z]}>
+              <boxGeometry args={[0.26, 0.015, 0.015]} />
+              <meshStandardMaterial color="#22d3ee" metalness={0.7} transparent opacity={op('Power Electronics')} />
             </mesh>
           ))}
-          {/* Connectors */}
-          <mesh position={[-0.14, 0, 0]}>
-            <cylinderGeometry args={[0.015, 0.015, 0.06, 8]} />
-            <meshStandardMaterial color="#f59e0b" transparent opacity={op('Power Electronics')} />
+          {/* HV connector */}
+          <mesh position={[-0.15, 0, 0]}>
+            <cylinderGeometry args={[0.018, 0.018, 0.07, 8]} />
+            <meshStandardMaterial color="#f59e0b" emissive="#f59e0b" emissiveIntensity={0.3} transparent opacity={op('Power Electronics')} />
+          </mesh>
+          {/* Status LED */}
+          <mesh position={[0.12, 0.058, 0.08]}>
+            <sphereGeometry args={[0.008, 8, 8]} />
+            <meshStandardMaterial color="#22ff44" emissive="#22ff44" emissiveIntensity={2} transparent opacity={op('Power Electronics')} />
           </mesh>
         </group>
       </CarPart>
 
-      {/* ─── THERMAL SYSTEM ─── */}
-      <CarPart partName="Thermal System" offset={[1.5, 0.3, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        <group position={[1.2, 0.2, 0]}>
+      {/* ═══════ THERMAL SYSTEM ═══════ */}
+      <CarPart partName="Thermal System" offset={[1.8, 0.3, 0]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        <group position={[1.22, 0.2, 0]}>
+          {/* Radiator core */}
           <mesh castShadow>
-            <boxGeometry args={[0.035, 0.28, 0.55]} />
-            <meshStandardMaterial color="#f97316" metalness={0.55} roughness={0.28} transparent opacity={op('Thermal System')} />
+            <boxGeometry args={[0.04, 0.3, 0.56]} />
+            <meshStandardMaterial color="#f97316" metalness={0.45} roughness={0.35} transparent opacity={op('Thermal System')} emissive="#f97316" emissiveIntensity={0.1} />
           </mesh>
+          {/* Fins */}
           {[-0.12, -0.06, 0, 0.06, 0.12].map((y, i) => (
             <mesh key={i} position={[0, y, 0]}>
-              <boxGeometry args={[0.03, 0.008, 0.53]} />
-              <meshStandardMaterial color="#ea580c" metalness={0.65} transparent opacity={op('Thermal System')} />
+              <boxGeometry args={[0.035, 0.008, 0.54]} />
+              <meshStandardMaterial color="#fb923c" metalness={0.55} transparent opacity={op('Thermal System')} />
             </mesh>
           ))}
-          <mesh position={[-0.04, 0.12, 0.24]} rotation={[0, 0, Math.PI / 4]}>
-            <cylinderGeometry args={[0.014, 0.014, 0.18, 12]} />
-            <meshStandardMaterial color="#333" roughness={0.85} transparent opacity={op('Thermal System')} />
+          {/* Coolant hoses */}
+          <mesh position={[-0.04, 0.13, 0.25]} rotation={[0, 0, Math.PI / 4]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.2, 12]} />
+            <meshStandardMaterial color="#444" roughness={0.8} transparent opacity={op('Thermal System')} />
           </mesh>
-          <mesh position={[-0.04, -0.12, 0.24]} rotation={[0, 0, -Math.PI / 4]}>
-            <cylinderGeometry args={[0.014, 0.014, 0.18, 12]} />
-            <meshStandardMaterial color="#333" roughness={0.85} transparent opacity={op('Thermal System')} />
+          <mesh position={[-0.04, -0.13, 0.25]} rotation={[0, 0, -Math.PI / 4]}>
+            <cylinderGeometry args={[0.016, 0.016, 0.2, 12]} />
+            <meshStandardMaterial color="#444" roughness={0.8} transparent opacity={op('Thermal System')} />
+          </mesh>
+          {/* Fan */}
+          <mesh position={[-0.03, 0, 0]} rotation={[0, Math.PI / 2, 0]}>
+            <cylinderGeometry args={[0.1, 0.1, 0.01, 24]} />
+            <meshStandardMaterial color="#555" metalness={0.5} roughness={0.5} transparent opacity={op('Thermal System') * 0.4} />
           </mesh>
         </group>
       </CarPart>
 
-      {/* ─── SUSPENSION & BRAKES ─── */}
-      <CarPart partName="Suspension & Brakes" offset={[0, -0.6, 1.2]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        {/* Front subframe */}
+      {/* ═══════ SUSPENSION & BRAKES ═══════ */}
+      <CarPart partName="Suspension & Brakes" offset={[0, -0.7, 1.3]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        {/* Subframes */}
         <mesh position={[0.8, 0.02, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.03, 0.7]} />
-          <meshStandardMaterial color="#333" metalness={0.9} roughness={0.25} transparent opacity={op('Suspension & Brakes')} />
+          <boxGeometry args={[0.55, 0.035, 0.72]} />
+          <meshStandardMaterial color="#555" metalness={0.8} roughness={0.3} transparent opacity={op('Suspension & Brakes')} />
         </mesh>
-        {/* Rear subframe */}
         <mesh position={[-0.8, 0.02, 0]} castShadow>
-          <boxGeometry args={[0.5, 0.03, 0.7]} />
-          <meshStandardMaterial color="#333" metalness={0.9} roughness={0.25} transparent opacity={op('Suspension & Brakes')} />
+          <boxGeometry args={[0.55, 0.035, 0.72]} />
+          <meshStandardMaterial color="#555" metalness={0.8} roughness={0.3} transparent opacity={op('Suspension & Brakes')} />
         </mesh>
+        {/* Coil springs */}
+        {[[0.82, 0.4], [0.82, -0.4], [-0.82, 0.4], [-0.82, -0.4]].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.1, z]}>
+            <cylinderGeometry args={[0.025, 0.025, 0.15, 12]} />
+            <meshStandardMaterial color="#ef4444" metalness={0.5} roughness={0.4} transparent opacity={op('Suspension & Brakes')} emissive="#ef4444" emissiveIntensity={0.1} />
+          </mesh>
+        ))}
         {/* Control arms */}
-        {[[0.8, 0.42], [0.8, -0.42], [-0.8, 0.42], [-0.8, -0.42]].map(([x, z], i) => (
-          <mesh key={i} position={[x, 0.04, z * 0.8]} rotation={[0, 0.3 * Math.sign(z), 0]}>
-            <boxGeometry args={[0.25, 0.02, 0.025]} />
-            <meshStandardMaterial color="#555" metalness={0.85} roughness={0.3} transparent opacity={op('Suspension & Brakes')} />
+        {[[0.82, 0.4], [0.82, -0.4], [-0.82, 0.4], [-0.82, -0.4]].map(([x, z], i) => (
+          <mesh key={`a${i}`} position={[x, 0.04, z * 0.75]} rotation={[0, 0.25 * Math.sign(z), 0]}>
+            <boxGeometry args={[0.28, 0.02, 0.025]} />
+            <meshStandardMaterial color="#777" metalness={0.8} roughness={0.3} transparent opacity={op('Suspension & Brakes')} />
           </mesh>
         ))}
       </CarPart>
 
-      {/* ─── WHEELS & TIRES ─── */}
-      <CarPart partName="Wheels & Tires" offset={[0, 0, 1.5]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        <Wheel position={[0.82, 0.04, 0.48]} spinning={!isExploded} />
-        <Wheel position={[0.82, 0.04, -0.48]} spinning={!isExploded} />
-        <Wheel position={[-0.82, 0.04, 0.48]} spinning={!isExploded} />
-        <Wheel position={[-0.82, 0.04, -0.48]} spinning={!isExploded} />
+      {/* ═══════ WHEELS & TIRES ═══════ */}
+      <CarPart partName="Wheels & Tires" offset={[0, 0, 1.6]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        <Wheel position={[0.84, 0.04, 0.49]} spinning={!isExploded} />
+        <Wheel position={[0.84, 0.04, -0.49]} spinning={!isExploded} />
+        <Wheel position={[-0.84, 0.04, 0.49]} spinning={!isExploded} />
+        <Wheel position={[-0.84, 0.04, -0.49]} spinning={!isExploded} />
       </CarPart>
 
-      {/* ─── WIRING HARNESS ─── */}
-      <CarPart partName="Wiring Harness" offset={[0, 0.8, -1.2]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
-        {[0.3, 0.15, 0, -0.15, -0.3].map((z, i) => (
-          <mesh key={i} position={[0, 0.07, z]}>
-            <cylinderGeometry args={[0.006, 0.006, 2.2, 6]} rotation={[0, 0, Math.PI / 2]} />
-            <meshStandardMaterial color={['#a855f7', '#7c3aed', '#6d28d9', '#a855f7', '#7c3aed'][i]} transparent opacity={op('Wiring Harness')} />
+      {/* ═══════ WIRING HARNESS ═══════ */}
+      <CarPart partName="Wiring Harness" offset={[0, 0.9, -1.3]} disassembled={isExploded} selectedPart={selectedPart} onSelect={onSelectPart}>
+        {[0.28, 0.14, 0, -0.14, -0.28].map((z, i) => (
+          <mesh key={i} position={[0, 0.07, z]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[0.007, 0.007, 2.4, 6]} />
+            <meshStandardMaterial color={['#a855f7', '#f97316', '#22d3ee', '#a855f7', '#ef4444'][i]} emissive={['#a855f7', '#f97316', '#22d3ee', '#a855f7', '#ef4444'][i]} emissiveIntensity={0.3} transparent opacity={op('Wiring Harness')} />
+          </mesh>
+        ))}
+        {/* Connectors */}
+        {[-1.0, -0.5, 0, 0.5, 1.0].map((x, i) => (
+          <mesh key={`cn${i}`} position={[x, 0.07, 0]}>
+            <boxGeometry args={[0.03, 0.025, 0.08]} />
+            <meshStandardMaterial color="#333" roughness={0.6} transparent opacity={op('Wiring Harness') * 0.7} />
           </mesh>
         ))}
       </CarPart>
 
-      {/* ─── LIGHTS (always visible) ─── */}
-      <mesh position={[1.35, 0.24, 0.28]}><sphereGeometry args={[0.045, 24, 24]} /><meshStandardMaterial color="#fff" emissive="#ffffcc" emissiveIntensity={2} /></mesh>
-      <mesh position={[1.35, 0.24, -0.28]}><sphereGeometry args={[0.045, 24, 24]} /><meshStandardMaterial color="#fff" emissive="#ffffcc" emissiveIntensity={2} /></mesh>
-      {/* DRL */}
-      <mesh position={[1.38, 0.22, 0]}><boxGeometry args={[0.01, 0.018, 0.45]} /><meshStandardMaterial color={accentColor} emissive={accentColor} emissiveIntensity={1} /></mesh>
+      {/* ═══════ LIGHTS (always visible) ═══════ */}
+      {/* Headlights */}
+      <mesh position={[1.38, 0.24, 0.3]}><sphereGeometry args={[0.05, 24, 24]} /><meshStandardMaterial color="#ffffee" emissive="#ffffcc" emissiveIntensity={3} /></mesh>
+      <mesh position={[1.38, 0.24, -0.3]}><sphereGeometry args={[0.05, 24, 24]} /><meshStandardMaterial color="#ffffee" emissive="#ffffcc" emissiveIntensity={3} /></mesh>
+      {/* Headlight housing */}
+      <mesh position={[1.37, 0.24, 0.3]}><boxGeometry args={[0.03, 0.06, 0.12]} /><meshStandardMaterial color="#ddd" metalness={0.8} roughness={0.1} /></mesh>
+      <mesh position={[1.37, 0.24, -0.3]}><boxGeometry args={[0.03, 0.06, 0.12]} /><meshStandardMaterial color="#ddd" metalness={0.8} roughness={0.1} /></mesh>
+      {/* DRL strip */}
+      <mesh position={[1.4, 0.2, 0]}><boxGeometry args={[0.008, 0.015, 0.5]} /><meshStandardMaterial color={accentColor} emissive={accentColor} emissiveIntensity={1.5} /></mesh>
       {/* Taillights */}
-      <mesh position={[-1.33, 0.24, 0.3]}><boxGeometry args={[0.02, 0.045, 0.1]} /><meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={1.2} /></mesh>
-      <mesh position={[-1.33, 0.24, -0.3]}><boxGeometry args={[0.02, 0.045, 0.1]} /><meshStandardMaterial color="#ff0000" emissive="#ff0000" emissiveIntensity={1.2} /></mesh>
-      <mesh position={[-1.35, 0.24, 0]}><boxGeometry args={[0.008, 0.022, 0.55]} /><meshStandardMaterial color="#ff2222" emissive="#ff2222" emissiveIntensity={0.6} /></mesh>
+      <mesh position={[-1.36, 0.24, 0.3]}><boxGeometry args={[0.02, 0.05, 0.12]} /><meshStandardMaterial color="#ff2222" emissive="#ff0000" emissiveIntensity={2} /></mesh>
+      <mesh position={[-1.36, 0.24, -0.3]}><boxGeometry args={[0.02, 0.05, 0.12]} /><meshStandardMaterial color="#ff2222" emissive="#ff0000" emissiveIntensity={2} /></mesh>
+      {/* Taillight bar */}
+      <mesh position={[-1.38, 0.24, 0]}><boxGeometry args={[0.006, 0.02, 0.55]} /><meshStandardMaterial color="#ff3333" emissive="#ff2222" emissiveIntensity={0.8} /></mesh>
       {/* Mirrors */}
-      <mesh position={[0.38, 0.42, 0.44]} castShadow><boxGeometry args={[0.065, 0.04, 0.035]} /><meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} /></mesh>
-      <mesh position={[0.38, 0.42, -0.44]} castShadow><boxGeometry args={[0.065, 0.04, 0.035]} /><meshPhysicalMaterial color={bodyColor} metalness={1} roughness={0.35} clearcoat={1} /></mesh>
+      <mesh position={[0.36, 0.44, 0.46]} castShadow><boxGeometry args={[0.07, 0.04, 0.035]} /><meshStandardMaterial color={paintColor} metalness={0.6} roughness={0.25} /></mesh>
+      <mesh position={[0.36, 0.44, -0.46]} castShadow><boxGeometry args={[0.07, 0.04, 0.035]} /><meshStandardMaterial color={paintColor} metalness={0.6} roughness={0.25} /></mesh>
+      {/* Antenna */}
+      <mesh position={[-0.3, 0.66, 0]}>
+        <cylinderGeometry args={[0.003, 0.003, 0.08, 6]} />
+        <meshStandardMaterial color="#333" roughness={0.5} />
+      </mesh>
     </group>
   );
 }
