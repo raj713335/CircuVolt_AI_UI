@@ -125,12 +125,56 @@ export default function Dashboard() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiQuery, setAiQuery] = useState('');
   const [newsFilter, setNewsFilter] = useState('All');
+  const [liveNews, setLiveNews] = useState([]);
+  const [livePapers, setLivePapers] = useState([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+  const [loadingPapers, setLoadingPapers] = useState(true);
   const aiRef = useRef(null);
 
   useEffect(() => {
     getDashboardSummary().then(setSummary).catch(() =>
       setSummary({ total_passports: 24, total_predictions: 559, grade_distribution: { A: 180, B: 195, C: 112, D: 72 }, estimated_co2_avoided_kg: 234780, material_recovery_potential_pct: 81, average_soh: 76.4 })
     );
+
+    // Fetch Live News
+    fetch('https://api.rss2json.com/v1/api.json?rss_url=https://news.google.com/rss/search?q=EV+battery+recycling')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.items) {
+          const parsed = data.items.slice(0, 8).map(item => {
+            const sourceMatch = item.title.match(/ - (.*)$/);
+            const source = sourceMatch ? sourceMatch[1] : 'News';
+            const title = item.title.replace(/ - .*$/, '');
+            const date = new Date(item.pubDate).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            return { title, date, source, category: 'Industry', icon: Newspaper, url: item.link };
+          });
+          setLiveNews(parsed);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoadingNews(false));
+
+    // Fetch Live Research Papers
+    fetch('https://export.arxiv.org/api/query?search_query=all:battery+recycling&start=0&max_results=6')
+      .then(res => res.text())
+      .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
+      .then(data => {
+        const entries = Array.from(data.querySelectorAll('entry'));
+        const parsedPapers = entries.map(entry => {
+          const title = entry.querySelector('title').textContent.trim().replace(/\n/g, ' ');
+          const authors = Array.from(entry.querySelectorAll('author name')).map(n => n.textContent).join(', ');
+          const published = new Date(entry.querySelector('published').textContent).getFullYear().toString();
+          const link = entry.querySelector('link[title="pdf"]')?.getAttribute('href') || entry.querySelector('link')?.getAttribute('href');
+          return {
+            title, journal: 'ArXiv preprint', year: published,
+            authors: authors.length > 30 ? authors.substring(0, 27) + '...' : authors,
+            impact: 'Open', tags: ['Research'], url: link
+          };
+        });
+        setLivePapers(parsedPapers);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingPapers(false));
   }, []);
 
   const runAiInsights = async (topic) => {
@@ -163,7 +207,9 @@ export default function Dashboard() {
     { grade: 'D', count: gd.D, color: '#ef4444', label: 'Urgent Recycling', pct: ((gd.D / totalBatteries) * 100).toFixed(0) },
   ];
 
-  const filteredNews = newsFilter === 'All' ? NEWS_ITEMS : NEWS_ITEMS.filter(n => n.category === newsFilter);
+  const currentNewsList = liveNews.length > 0 ? liveNews : NEWS_ITEMS;
+  const filteredNews = newsFilter === 'All' ? currentNewsList : currentNewsList.filter(n => n.category === newsFilter);
+  const currentPapersList = livePapers.length > 0 ? livePapers : RESEARCH_PAPERS;
 
   return (
     <div className="h-screen overflow-y-auto bg-[#f5f0e8] p-6" style={{ fontFamily: "'Georgia', serif" }}>
@@ -432,14 +478,16 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="space-y-1.5 max-h-[240px] overflow-y-auto">
-            {filteredNews.map((item, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
-                className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-white/60 transition-colors cursor-pointer group">
+            {loadingNews ? (
+              <div className="flex justify-center items-center h-20"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+            ) : filteredNews.map((item, i) => (
+              <motion.a key={i} href={item.url || `https://www.google.com/search?q=${encodeURIComponent(item.title)}`} target="_blank" rel="noreferrer" initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}
+                className="flex items-start gap-2.5 p-2 rounded-lg hover:bg-white/60 transition-colors cursor-pointer group block">
                 <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-emerald-50">
                   <item.icon className="w-3.5 h-3.5 text-gray-500 group-hover:text-emerald-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-semibold text-gray-700 leading-tight group-hover:text-emerald-700">{item.title}</p>
+                  <p className="text-[11px] font-semibold text-gray-700 leading-tight group-hover:text-emerald-700 group-hover:underline">{item.title}</p>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[9px] text-gray-400">{item.date}</span>
                     <span className="text-[9px] text-gray-400">·</span>
@@ -453,7 +501,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <ExternalLink className="w-3 h-3 text-gray-300 shrink-0 mt-1 group-hover:text-emerald-500" />
-              </motion.div>
+              </motion.a>
             ))}
           </div>
         </div>
@@ -465,17 +513,22 @@ export default function Dashboard() {
             <InfoIcon tooltip="Key peer-reviewed papers advancing battery recycling science. Covers direct recycling, hydrometallurgy optimization, AI/ML applications, solid-state battery end-of-life, and policy impact studies from top journals." />
           </h3>
           <div className="space-y-2 max-h-[240px] overflow-y-auto">
-            {RESEARCH_PAPERS.map((paper, i) => (
-              <motion.div key={i} initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
-                className="p-2.5 rounded-lg bg-white/50 border border-gray-100 hover:border-indigo-200 hover:shadow-sm transition-all cursor-pointer group">
-                <p className="text-[11px] font-semibold text-gray-700 leading-tight group-hover:text-indigo-700">"{paper.title}"</p>
+            {loadingPapers ? (
+              <div className="flex justify-center items-center h-20"><Loader2 className="w-5 h-5 animate-spin text-gray-400" /></div>
+            ) : currentPapersList.map((paper, i) => (
+              <motion.a key={i} href={paper.url || `https://scholar.google.com/scholar?q=${encodeURIComponent(paper.title)}`} target="_blank" rel="noreferrer" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 }}
+                className="p-2.5 rounded-lg bg-white/50 border border-gray-100 hover:border-indigo-200 hover:shadow-sm transition-all cursor-pointer group block">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-gray-700 leading-tight group-hover:text-indigo-700 group-hover:underline">"{paper.title}"</p>
+                  <ExternalLink className="w-3 h-3 text-gray-300 shrink-0 group-hover:text-indigo-500" />
+                </div>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-[9px] text-indigo-500 font-medium italic">{paper.journal}</span>
                   <span className="text-[9px] text-gray-400">{paper.year}</span>
                   <span className="text-[9px] text-gray-400">·</span>
                   <span className="text-[9px] text-gray-500">{paper.authors}</span>
                 </div>
-                <div className="flex items-center gap-1.5 mt-1.5">
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                   {paper.tags.map(t => (
                     <span key={t} className="text-[8px] px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600 font-medium">{t}</span>
                   ))}
@@ -483,7 +536,7 @@ export default function Dashboard() {
                     {paper.impact} Impact
                   </span>
                 </div>
-              </motion.div>
+              </motion.a>
             ))}
           </div>
         </div>
