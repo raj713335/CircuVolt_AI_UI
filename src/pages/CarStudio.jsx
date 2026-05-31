@@ -15,6 +15,7 @@ const CAR_PHOTOS = {
   'Toyota Camry Hybrid': '/cars/toyota-camry.png',
   'Ford F-150 Lightning': '/cars/ford-f150.png',
   'Lamborghini Urus': '/cars/lamborghini-urus.png',
+  'Ferrari 458 Italia': '/cars/ferrari.png',
 };
 
 // ── Fallback SVG generator ──
@@ -195,6 +196,22 @@ const CAR_DATABASE = {
       { name: 'Power Electronics', color: '#06b6d4', weight: '110 kg', recyclability: 91, cost: '$6,500', material: 'Steel/Aluminum', carbonFootprint: '2.0 tCO2e', recovery: 'Remanufacture/Melt', description: 'Torsen center diff with rear torque vectoring.' },
       { name: 'Thermal System', color: '#f97316', weight: '42 kg', recyclability: 86, cost: '$4,200', material: 'Titanium/Inconel', carbonFootprint: '1.5 tCO2e', recovery: 'PGM + Ti recovery', description: 'Titanium sport exhaust. Valuable metals.' },
       { name: 'Wheels & Tires', color: '#64748b', weight: '120 kg', recyclability: 78, cost: '$12,000', material: 'Carbon Ceramic/Forged Al', carbonFootprint: '2.8 tCO2e', recovery: 'Specialized recycling', description: 'Carbon ceramic brakes and 23" forged wheels.' },
+    ]
+  },
+  'Ferrari 458 Italia': {
+    type: 'Supercar', year: '2015', msrp: '$239,340',
+    get image() { return CAR_PHOTOS['Ferrari 458 Italia']; }, get thumbnail() { return CAR_PHOTOS['Ferrari 458 Italia']; },
+    bodyColor: '#ef4444', accentColor: '#facc15',
+    specs: { range: '— mi', hp: '562 hp', accel: '3.3s 0-60', weight: '1,565 kg' },
+    components: [
+      { name: 'V8 Engine', color: '#ef4444', weight: '210 kg', recyclability: 88, cost: '$35,000', material: 'Aluminum/Steel', carbonFootprint: '5.2 tCO2e', recovery: 'Remanufacture/Melt', description: '4.5L naturally aspirated V8. High-value remanufacturing potential.' },
+      { name: 'Transmission', color: '#ec4899', weight: '120 kg', recyclability: 82, cost: '$12,500', material: 'Steel/Aluminum', carbonFootprint: '2.5 tCO2e', recovery: 'Remanufacture', description: '7-speed dual-clutch transmission.' },
+      { name: 'Body Panels', color: '#10b981', weight: '180 kg', recyclability: 85, cost: '$25,000', material: 'Aluminum', carbonFootprint: '4.0 tCO2e', recovery: 'Smelting', description: 'Superplastic-formed aluminum body panels.' },
+      { name: 'Chassis Frame', color: '#f59e0b', weight: '320 kg', recyclability: 94, cost: '$18,000', material: 'Aluminum', carbonFootprint: '6.5 tCO2e', recovery: 'Smelting', description: 'Extruded aluminum chassis.' },
+      { name: 'Interior Cabin', color: '#8b5cf6', weight: '150 kg', recyclability: 45, cost: '$12,000', material: 'Leather/Carbon', carbonFootprint: '2.8 tCO2e', recovery: 'Manual disassembly', description: 'Hand-stitched leather and carbon fiber trim.' },
+      { name: 'Power Electronics', color: '#06b6d4', weight: '45 kg', recyclability: 85, cost: '$4,500', material: 'PCB/Copper/Steel', carbonFootprint: '1.2 tCO2e', recovery: 'E-waste processing', description: 'Engine management and vehicle dynamics ECUs.' },
+      { name: 'Thermal System', color: '#f97316', weight: '35 kg', recyclability: 80, cost: '$3,200', material: 'Aluminum/Stainless Steel', carbonFootprint: '1.0 tCO2e', recovery: 'PGM recovery', description: 'High-performance cooling and exhaust system.' },
+      { name: 'Wheels & Tires', color: '#64748b', weight: '110 kg', recyclability: 75, cost: '$8,000', material: 'Forged Al/Rubber', carbonFootprint: '2.0 tCO2e', recovery: 'Devulcanization/Melt', description: '20" forged alloy wheels with performance tires.' },
     ]
   },
 };
@@ -498,7 +515,7 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
 
 export default function CarStudio() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCar, setSelectedCar] = useState(null);
+  const [selectedCar, setSelectedCar] = useState('Ferrari 458 Italia');
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [isExploded, setIsExploded] = useState(false);
   const [dynamicCars, setDynamicCars] = useState({});
