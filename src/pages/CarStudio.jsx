@@ -444,52 +444,54 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
       <color attach="background" args={['#111122']} />
       <fog attach="fog" args={['#111122', 10, 22]} />
 
-      {/* Environment map for realistic metallic reflections */}
-      <Environment preset="city" />
+      <Suspense fallback={null}>
+        {/* Environment map for realistic metallic reflections */}
+        <Environment preset="city" />
 
-      {/* Key light - bright warm from top-right */}
-      <spotLight position={[5, 10, 5]} intensity={6} angle={0.35} penumbra={0.5} castShadow shadow-mapSize={2048} color="#fff5e6" />
-      {/* Fill light - cool blue from left */}
-      <spotLight position={[-6, 8, -4]} intensity={3} angle={0.45} penumbra={0.6} color="#c8d8f0" />
-      {/* Rim / back light */}
-      <spotLight position={[-3, 4, -6]} intensity={2.5} angle={0.5} penumbra={0.8} color="#eeddff" />
-      {/* Under-car accent glow */}
-      <pointLight position={[0, 0.1, 0]} intensity={1.5} color={carData.accentColor} distance={4} />
-      {/* Front fill */}
-      <pointLight position={[3, 1, 2]} intensity={1.5} color="#ffffff" />
-      {/* Strong ambient fill */}
-      <ambientLight intensity={0.8} />
-      <hemisphereLight args={['#b0c8f0', '#443322', 0.7]} />
+        {/* Key light - bright warm from top-right */}
+        <spotLight position={[5, 10, 5]} intensity={6} angle={0.35} penumbra={0.5} castShadow shadow-mapSize={2048} color="#fff5e6" />
+        {/* Fill light - cool blue from left */}
+        <spotLight position={[-6, 8, -4]} intensity={3} angle={0.45} penumbra={0.6} color="#c8d8f0" />
+        {/* Rim / back light */}
+        <spotLight position={[-3, 4, -6]} intensity={2.5} angle={0.5} penumbra={0.8} color="#eeddff" />
+        {/* Under-car accent glow */}
+        <pointLight position={[0, 0.1, 0]} intensity={1.5} color={carData.accentColor} distance={4} />
+        {/* Front fill */}
+        <pointLight position={[3, 1, 2]} intensity={1.5} color="#ffffff" />
+        {/* Strong ambient fill */}
+        <ambientLight intensity={0.8} />
+        <hemisphereLight args={['#b0c8f0', '#443322', 0.7]} />
 
-      <OrbitControls
-        enablePan={false}
-        enableZoom
-        enableRotate
-        maxDistance={8}
-        minDistance={2}
-        maxPolarAngle={Math.PI / 2.1}
-        target={[0, 0.3, 0]}
-        autoRotate={!selectedPart && !isExploded}
-        autoRotateSpeed={0.5}
-      />
+        <OrbitControls
+          enablePan={false}
+          enableZoom
+          enableRotate
+          maxDistance={8}
+          minDistance={2}
+          maxPolarAngle={Math.PI / 2.1}
+          target={[0, 0.3, 0]}
+          autoRotate={!selectedPart && !isExploded}
+          autoRotateSpeed={0.5}
+        />
 
-      {/* 3D Car */}
-      <RealisticCar3D
-        bodyColor={carData.bodyColor}
-        accentColor={carData.accentColor}
-        isExploded={isExploded}
-        selectedPart={selectedPart}
-        onSelectPart={onSelectPart}
-      />
+        {/* 3D Car */}
+        <RealisticCar3D
+          bodyColor={carData.bodyColor}
+          accentColor={carData.accentColor}
+          isExploded={isExploded}
+          selectedPart={selectedPart}
+          onSelectPart={onSelectPart}
+        />
 
-      {/* Ground plane - subtle reflective */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[50, 50]} />
-        <meshStandardMaterial color="#181828" metalness={0.5} roughness={0.5} />
-      </mesh>
+        {/* Ground plane - subtle reflective */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
+          <planeGeometry args={[50, 50]} />
+          <meshStandardMaterial color="#181828" metalness={0.5} roughness={0.5} />
+        </mesh>
 
-      <FloorGrid />
-      <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={12} blur={2.5} far={3} />
+        <FloorGrid />
+        <ContactShadows position={[0, 0.001, 0]} opacity={0.5} scale={12} blur={2.5} far={3} />
+      </Suspense>
     </Canvas>
   );
 }
