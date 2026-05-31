@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Battery, AlertTriangle, CheckCircle, Info, Sparkles, Bot, Loader2, X } from 'lucide-react';
 import { predictSOH, getSampleBatteries, streamSohAiSummary } from '../services/api';
 import toast from 'react-hot-toast';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, LineChart, Line, Legend } from 'recharts';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, ContactShadows, RoundedBox } from '@react-three/drei';
 import { Layers } from 'lucide-react';
@@ -51,7 +51,7 @@ const InfoIcon = ({ tooltip }) => {
       {show && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShow(false)} />
-          <div className="fixed z-50 w-72 bg-white rounded-xl shadow-xl border border-[#d4c5a9] p-3.5 text-xs text-gray-600 leading-relaxed whitespace-pre-line"
+          <div className="fixed z-50 w-72 bg-white rounded-xl shadow-xl border border-[#d4c5a9] p-3.5 text-xs text-gray-600 leading-relaxed whitespace-pre-line normal-case tracking-normal text-left font-sans font-normal"
             style={{ top: 'auto', left: 'auto' }}
             ref={el => {
               if (el) {
@@ -248,6 +248,48 @@ export default function SOHPredictor() {
     { attr: 'DoD', score: Math.max(0, 120 - formData.depth_of_discharge) },
     { attr: 'Efficiency', score: Math.round((formData.discharge_capacity / Math.max(formData.charge_capacity, 1)) * 100) },
   ].map(d => ({ ...d, score: Math.min(100, Math.max(0, d.score)), fullMark: 100 })) : [];
+
+  // Generate SoH Degradation Forecast Data
+  const generateDegradationData = () => {
+    if (!result) return [];
+    const data = [];
+    const currentCycle = formData.cycle_count;
+    const currentSoh = result.predicted_soh;
+    const maxCycles = currentCycle + result.rul_cycles + (result.rul_cycles > 1000 ? 500 : 200);
+    
+    const decayRate = -Math.log(currentSoh / 100) / currentCycle;
+    for (let i = 0; i <= maxCycles; i += Math.max(50, Math.floor(maxCycles/20))) {
+      const soh = 100 * Math.exp(-decayRate * i);
+      data.push({
+        cycle: i,
+        historicalSoH: i <= currentCycle ? Math.round(soh * 10) / 10 : null,
+        projectedSoH: i >= currentCycle ? Math.round(soh * 10) / 10 : null,
+      });
+    }
+    return data;
+  };
+
+  // Generate Voltage Discharge Profile Data
+  const generateVoltageCurve = () => {
+    if (!result) return [];
+    const data = [];
+    const capacityFactor = formData.charge_capacity / formData.rated_capacity;
+    const resDrop = (formData.internal_resistance / 1000) * formData.current;
+    
+    for (let t = 0; t <= 100; t += 5) {
+      let idealV = 4.2 - (0.01 * t) - (0.2 * Math.exp(t/15 - 6));
+      let actualV = (4.2 - resDrop) - (0.01 * (t / capacityFactor)) - (0.2 * Math.exp((t / capacityFactor)/15 - 6));
+      data.push({
+        time: t,
+        idealV: Math.max(3.0, idealV).toFixed(2),
+        actualV: Math.max(3.0, actualV).toFixed(2),
+      });
+    }
+    return data;
+  };
+
+  const degradationData = generateDegradationData();
+  const voltageData = generateVoltageCurve();
 
   return (
     <div className="space-y-6">
@@ -453,6 +495,45 @@ export default function SOHPredictor() {
                     </ResponsiveContainer>
                   </div>
                 )}
+              </div>
+
+              {/* Advanced Analytics Row */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* SoH Degradation Forecast */}
+                <div className="bg-white/60 rounded-xl p-5 border border-[#d4c5a9]">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-3 flex items-center">
+                    ✦ SoH Degradation Forecast<InfoIcon tooltip="Plots historical capacity fade and projects future Remaining Useful Life (RUL) until End of Life." />
+                  </h4>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={degradationData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                      <XAxis dataKey="cycle" stroke="#9ca3af" fontSize={10} tickFormatter={(v) => `${v}c`} />
+                      <YAxis domain={[40, 100]} stroke="#9ca3af" fontSize={10} tickFormatter={(v) => `${v}%`} />
+                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #d4c5a9', borderRadius: '8px' }} />
+                      <Legend wrapperStyle={{ fontSize: '10px' }} />
+                      <Line type="monotone" name="Historical SoH" dataKey="historicalSoH" stroke="#10b981" strokeWidth={3} dot={false} />
+                      <Line type="monotone" name="Projected SoH" dataKey="projectedSoH" stroke="#f59e0b" strokeWidth={3} strokeDasharray="5 5" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Discharge Voltage Profile */}
+                <div className="bg-white/60 rounded-xl p-5 border border-[#d4c5a9]">
+                  <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-3 flex items-center">
+                    ✦ Discharge Voltage Profile<InfoIcon tooltip="Simulated voltage drop under load (TIEDVD). Degraded batteries show faster voltage collapse due to higher internal resistance and lost capacity." />
+                  </h4>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={voltageData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+                      <XAxis dataKey="time" stroke="#9ca3af" fontSize={10} tickFormatter={(v) => `${v}s`} />
+                      <YAxis domain={[3.0, 4.3]} stroke="#9ca3af" fontSize={10} tickFormatter={(v) => `${v}V`} />
+                      <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #d4c5a9', borderRadius: '8px' }} />
+                      <Legend wrapperStyle={{ fontSize: '10px' }} />
+                      <Line type="monotone" name="New Battery Baseline" dataKey="idealV" stroke="#9ca3af" strokeWidth={2} strokeDasharray="3 3" dot={false} />
+                      <Line type="monotone" name="Current Battery" dataKey="actualV" stroke="#ef4444" strokeWidth={2} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
               {/* AI Summary Report - Streaming */}

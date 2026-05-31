@@ -37,7 +37,7 @@ const InfoIcon = ({ tooltip }) => {
       {show && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShow(false)} />
-          <div className="fixed z-50 w-72 bg-white rounded-xl shadow-xl border border-[#d4c5a9] p-3.5 text-xs text-gray-600 leading-relaxed whitespace-pre-line"
+          <div className="fixed z-50 w-72 bg-white rounded-xl shadow-xl border border-[#d4c5a9] p-3.5 text-xs text-gray-600 leading-relaxed whitespace-pre-line normal-case tracking-normal text-left font-sans font-normal"
             style={{ top: 'auto', left: 'auto' }}
             ref={el => {
               if (el) {

@@ -23,7 +23,7 @@ const InfoIcon = ({ tooltip }) => {
       {show && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setShow(false)} />
-          <div className="fixed z-50 w-72 bg-white rounded-xl shadow-xl border border-[#d4c5a9] p-3.5 text-xs text-gray-600 leading-relaxed"
+          <div className="fixed z-50 w-72 bg-white rounded-xl shadow-xl border border-[#d4c5a9] p-3.5 text-xs text-gray-600 leading-relaxed normal-case tracking-normal text-left font-sans font-normal"
             ref={el => {
               if (el) {
                 const btn = el.parentElement.querySelector('button');
