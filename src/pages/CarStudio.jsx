@@ -1,4 +1,5 @@
-﻿import React, { useState, useRef, useMemo, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useEffect, Suspense, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, RoundedBox, ContactShadows, Environment, Stage } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -514,6 +515,7 @@ function CarScene({ carData, isExploded, selectedPart, onSelectPart }) {
 }
 
 export default function CarStudio() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCar, setSelectedCar] = useState('Ferrari 458 Italia');
   const [selectedComponent, setSelectedComponent] = useState(null);
@@ -887,7 +889,7 @@ export default function CarStudio() {
                 statusColor={totalRecyclability > 80 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'} date={`${totalRecyclability}% avg`} info={INFO.recycl_cert} />
               <StatusCard label="Carbon Footprint" status="ASSESSED" statusColor="text-blue-600 bg-blue-50"
                 date={`${carData.components.reduce((s, c) => s + parseFloat(c.carbonFootprint), 0).toFixed(1)} tCO2e`} info={INFO.carbon_footprint} />
-              <StatusCard label="End-of-Life Plan" status="ACTIVE" statusColor="text-emerald-600 bg-emerald-50" date="Recovery mapped" action="View →" info={INFO.eol_plan} />
+              <StatusCard label="End-of-Life Plan" status="ACTIVE" statusColor="text-emerald-600 bg-emerald-50" date="Recovery mapped" action="View →" onAction={() => navigate('/recovery')} info={INFO.eol_plan} />
             </div>
             <div className="px-4 pb-4">
               <div className="bg-white/50 rounded-xl p-3.5 border border-[#d4c5a9]">
@@ -912,7 +914,7 @@ function DetailRow({ icon: Icon, label, value, highlight, info }) {
   );
 }
 
-function StatusCard({ label, status, statusColor, date, action, info }) {
+function StatusCard({ label, status, statusColor, date, action, onAction, info }) {
   return (
     <div className="flex items-center justify-between bg-white/60 rounded-lg px-3 py-2.5 border border-[#d4c5a9]">
       <div>
@@ -922,7 +924,7 @@ function StatusCard({ label, status, statusColor, date, action, info }) {
           <span className="text-[10px] text-gray-400">{date}</span>
         </div>
       </div>
-      {action && <span className="text-[10px] text-emerald-600 font-medium cursor-pointer">{action}</span>}
+      {action && <button onClick={onAction} className="text-[10px] text-emerald-600 font-medium cursor-pointer hover:underline outline-none">{action}</button>}
     </div>
   );
 }
