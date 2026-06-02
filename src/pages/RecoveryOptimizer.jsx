@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { Recycle, Info, Bot, Loader2, CheckCircle, Sparkles, X, Shield, DollarSign, Leaf, Activity, ArrowRight, Layers, Zap } from 'lucide-react';
 import { recommendRecovery, streamRecoveryAiSummary } from '../services/api';
 import toast from 'react-hot-toast';
@@ -61,7 +61,7 @@ const InfoIcon = ({ tooltip }) => {
   );
 };
 
-// â”€â”€ 3D Battery Component for Disassembly Visualization â”€â”€
+// ── 3D Battery Component for Disassembly Visualization ──
 const RealisticBattery3D = ({ isExploded }) => {
   const groupRef = useRef();
   const explodeFactor = useRef(0);
@@ -93,8 +93,8 @@ const RealisticBattery3D = ({ isExploded }) => {
               <RoundedBox args={[1.5, 0.9, 1.6]} radius={0.05} smoothness={4}>
                 <meshStandardMaterial color="#27272a" roughness={0.4} metalness={0.8} />
               </RoundedBox>
-              <mesh position={[0, 0.46, 0]}>
-                <planeGeometry args={[1.3, 1.4]} rotation={[-Math.PI/2, 0, 0]} />
+              <mesh position={[0, 0.46, 0]} rotation={[-Math.PI/2, 0, 0]}>
+                <planeGeometry args={[1.3, 1.4]} />
                 <meshStandardMaterial color="#eab308" roughness={0.3} metalness={1} />
               </mesh>
             </group>
@@ -110,7 +110,7 @@ const RealisticBattery3D = ({ isExploded }) => {
     </group>
   );
 };
-// â”€â”€ 3D Robotic Arm Component â”€â”€
+// ── 3D Robotic Arm Component ──
 const RoboticArm3D = () => {
   const armRef = useRef();
   const forearmRef = useRef();
@@ -127,7 +127,7 @@ const RoboticArm3D = () => {
     if (forearmRef.current) forearmRef.current.rotation.z = Math.PI / 4 + Math.sin(time * 2) * 0.1;
 
     // Laser pulsing
-    if (laserRef.current) laserRef.current.opacity = 0.5 + Math.sin(time * 10) * 0.5;
+    if (laserRef.current) laserRef.current.material.opacity = 0.5 + Math.sin(time * 10) * 0.5;
   });
 
   return (
@@ -178,7 +178,7 @@ const RoboticArm3D = () => {
   );
 };
 
-// â”€â”€ 3D Hydrometallurgical Extraction Component â”€â”€
+// ── 3D Hydrometallurgical Extraction Component ──
 const HydroExtraction3D = () => {
   const particlesRef = useRef();
 
@@ -335,9 +335,9 @@ export default function RecoveryOptimizer() {
           </label>
           <select value={formData.component_type} onChange={e => setFormData({...formData, component_type: e.target.value})}
             className="w-full bg-white/70 border border-[#d4c5a9] rounded-lg px-3 py-2 text-sm text-gray-800 font-bold">
-            <option value="EV Battery Pack">ðŸ”‹ EV Battery Pack</option>
-            <option value="Electric Drive Motor">âš™ï¸ Electric Drive Motor</option>
-            <option value="Power Electronics (Inverter)">âš¡ Power Electronics (Inverter)</option>
+            <option value="EV Battery Pack">🔋 EV Battery Pack</option>
+            <option value="Electric Drive Motor">⚙️ Electric Drive Motor</option>
+            <option value="Power Electronics (Inverter)">⚡ Power Electronics (Inverter)</option>
           </select>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -473,7 +473,7 @@ export default function RecoveryOptimizer() {
             </div>
             <div className="bg-gradient-to-br from-[#1b2a3d] to-[#121c29] rounded-xl p-5 border border-teal-500/30 shadow-lg relative overflow-hidden">
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl" />
-              <div className="flex items-center text-xs font-bold text-teal-300 mb-2 uppercase tracking-widest gap-1.5"><Leaf className="w-3.5 h-3.5" /> COâ‚‚ Footprint Avoided</div>
+              <div className="flex items-center text-xs font-bold text-teal-300 mb-2 uppercase tracking-widest gap-1.5"><Leaf className="w-3.5 h-3.5" /> CO₂ Footprint Avoided</div>
               <div className="text-3xl font-black text-white">{result.carbon_impact?.total_carbon_avoided_kgco2e?.toLocaleString()} <span className="text-lg text-teal-200">kg</span></div>
               <div className="mt-2 text-[10px] text-teal-400 font-medium">Mitigated from raw material extraction</div>
             </div>
@@ -496,7 +496,7 @@ export default function RecoveryOptimizer() {
             <div className="bg-[#1b2a3d] rounded-xl p-0 border border-[#d4c5a9] overflow-hidden relative shadow-inner h-[440px]">
               <div className="absolute top-5 left-5 z-10">
                 <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400 mb-1 flex items-center">
-                  âœ¦ Digital Twin Disassembly<InfoIcon tooltip="Interactive 3D representation of the recommended physical disassembly." />
+                  ✦ Digital Twin Disassembly<InfoIcon tooltip="Interactive 3D representation of the recommended physical disassembly." />
                 </h3>
                 <p className="text-xs text-gray-400 font-medium">Robotic pathfinding simulation running...</p>
               </div>
@@ -513,7 +513,7 @@ export default function RecoveryOptimizer() {
 
             <div className="bg-white/80 rounded-xl p-6 border border-[#d4c5a9] h-[440px] overflow-y-auto shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-5 flex items-center">
-                âœ¦ AI-Optimized Sequence<InfoIcon tooltip={INFO.disassembly} />
+                ✦ AI-Optimized Sequence<InfoIcon tooltip={INFO.disassembly} />
               </h3>
               <div className="space-y-4">
                 {result.recovery_plan?.map((step, i) => (
@@ -525,7 +525,7 @@ export default function RecoveryOptimizer() {
                       <p className="text-sm font-bold text-gray-800">{step.action}</p>
                       <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{step.reason}</p>
                       <div className="flex gap-3 mt-2 items-center">
-                        <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1"><Zap className="w-3 h-3"/> AI Confidence: {(90 + Math.random() * 9).toFixed(1)}%</span>
+                        <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider flex items-center gap-1"><Zap className="w-3 h-3"/> AI Confidence: {(92 + (i * 1.3) % 7).toFixed(1)}%</span>
                         <span className={`text-[9px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-sm border ${safetyColor(step.safety_level)}`}>
                           {safetyLabel(step.safety_level)}
                         </span>
@@ -648,7 +648,7 @@ export default function RecoveryOptimizer() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="bg-white/80 rounded-xl p-6 border border-[#d4c5a9] shadow-sm">
               <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-4 flex items-center">
-                âœ¦ High-Purity Material Yield<InfoIcon tooltip={INFO.material_chart} />
+                ✦ High-Purity Material Yield<InfoIcon tooltip={INFO.material_chart} />
               </h3>
               <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
@@ -686,7 +686,7 @@ export default function RecoveryOptimizer() {
                   <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm ml-2 ${
                     aiSource === 'llm' ? 'bg-purple-200 text-purple-700 border border-purple-300' : 'bg-amber-100 text-amber-700 border border-amber-300'
                   }`}>
-                    {aiSource === 'llm' ? 'âœ¦ Neural Net' : 'âš™ Rule Engine'}
+                    {aiSource === 'llm' ? '✦ Neural Net' : '⚙ Rule Engine'}
                   </span>
                 )}
                 {aiLoading && <Loader2 className="w-4 h-4 text-purple-500 animate-spin ml-auto" />}
@@ -699,18 +699,18 @@ export default function RecoveryOptimizer() {
                       <span className="w-2 h-2 rounded-sm bg-purple-500" />{line.replace(/\*\*/g, '')}
                     </h5>;
                   }
-                  if (line.startsWith('â€¢')) {
+                  if (line.startsWith('•')) {
                     return (
                       <div key={i} className="flex gap-3 items-start ml-2 my-2 bg-white/50 p-2 rounded-lg border border-purple-100/50">
-                        <span className="text-emerald-500 mt-0.5 text-sm font-black">â€¢</span>
+                        <span className="text-emerald-500 mt-0.5 text-sm font-black">•</span>
                         <span className="text-gray-800 text-sm font-medium">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
                       </div>
                     );
                   }
-                  if (line.startsWith('â†’')) {
+                  if (line.startsWith('→')) {
                     return (
                       <div key={i} className="flex gap-3 items-start ml-2 my-2">
-                        <span className="text-purple-600 mt-0.5 font-bold">â†’</span>
+                        <span className="text-purple-600 mt-0.5 font-bold">→</span>
                         <span className="text-gray-700 text-sm">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
                       </div>
                     );

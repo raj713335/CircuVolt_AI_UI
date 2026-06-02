@@ -75,6 +75,7 @@ export const streamDesignAiAnalysis = async (designInput, scoreResult, onEvent) 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ design_input: designInput, score_result: scoreResult }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -105,6 +106,7 @@ export const streamCircularityAiSummary = async (params, scoreResult, onEvent) =
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ params, score_result: scoreResult }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -129,6 +131,7 @@ export const streamRecoveryAiSummary = async (params, recoveryResult, onEvent) =
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ params, recovery_result: recoveryResult }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -153,6 +156,7 @@ export const streamSohAiSummary = async (params, prediction, onEvent) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ params, prediction }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -177,6 +181,7 @@ export const streamPassportAiAnalysis = async (passportData, onEvent) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ passport_data: passportData }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -201,6 +206,7 @@ export const streamDashboardAiInsights = async (topic, onEvent) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ topic }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -225,6 +231,7 @@ export const streamVehicleSearch = async (query, onEvent) => {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query }),
   });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';

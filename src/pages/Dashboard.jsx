@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -120,6 +121,7 @@ const NEWS_ITEMS = [
 const PIE_COLORS = ['#10b981', '#6366f1', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6'];
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
   const [aiText, setAiText] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -550,7 +552,7 @@ export default function Dashboard() {
           { title: 'Recovery Plan', desc: 'Get intelligent disassembly sequence and material recovery recommendations', icon: Recycle, color: 'from-emerald-500 to-teal-500', path: '/recovery' },
           { title: 'Design Advisor', desc: 'Analyze battery design for recyclability score and improvement suggestions', icon: Cpu, color: 'from-amber-500 to-orange-500', path: '/design' },
         ].map((action, i) => (
-          <motion.a key={i} href={action.path} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
+          <motion.div key={i} onClick={() => navigate(action.path)} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 + i * 0.05 }}
             className="bg-white/60 rounded-xl p-4 border border-[#d4c5a9] hover:shadow-lg hover:border-emerald-300 transition-all group cursor-pointer">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center shadow-md mb-3`}>
               <action.icon className="w-5 h-5 text-white" />
@@ -559,7 +561,7 @@ export default function Dashboard() {
               {action.title} <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
             </h4>
             <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">{action.desc}</p>
-          </motion.a>
+          </motion.div>
         ))}
       </div>
 
