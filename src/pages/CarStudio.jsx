@@ -45,6 +45,7 @@ const INFO = {
   specs: "Key vehicle specifications: driving range (how far on full charge/tank), horsepower (engine/motor power), 0-60 acceleration time, and curb weight.",
   compare: "Compare two vehicles side-by-side on recyclability, carbon footprint, material recovery rates, and end-of-life value.",
   exploded: "Exploded view separates all components so you can see how they fit together. Assembled view shows the complete car. Click individual parts for details.",
+  powertrain: "The vehicle's primary propulsion system (e.g., Battery Electric, Internal Combustion Engine, Hybrid). Determines core material composition and recovery pathways.",
 };
 
 const InfoIcon = ({ tooltip }) => {
@@ -79,7 +80,7 @@ const InfoIcon = ({ tooltip }) => {
 
 const CAR_DATABASE = {
   'Tesla Model 3': {
-    type: 'Electric Sedan', year: '2024', msrp: '$38,990',
+    type: 'Electric Sedan', year: '2024', msrp: '$38,990', powertrain: 'Battery Electric (EV)',
     get image() { return CAR_PHOTOS['Tesla Model 3']; }, get thumbnail() { return CAR_PHOTOS['Tesla Model 3']; },
     bodyColor: '#1a1a2e', accentColor: '#6366f1',
     specs: { range: '358 mi', hp: '283 hp', accel: '5.8s 0-60', weight: '1,760 kg' },
@@ -117,7 +118,7 @@ const CAR_DATABASE = {
     ]
   },
   'BMW i4': {
-    type: 'Electric Gran Coupe', year: '2024', msrp: '$52,200',
+    type: 'Electric Gran Coupe', year: '2024', msrp: '$52,200', powertrain: 'Battery Electric (EV) / ICE Variants Available',
     get image() { return CAR_PHOTOS['BMW i4']; }, get thumbnail() { return CAR_PHOTOS['BMW i4']; },
     bodyColor: '#0f2027', accentColor: '#3b82f6',
     specs: { range: '301 mi', hp: '335 hp', accel: '5.5s 0-60', weight: '2,125 kg' },
@@ -152,7 +153,7 @@ const CAR_DATABASE = {
     ]
   },
   'Toyota Camry Hybrid': {
-    type: 'Hybrid Sedan', year: '2024', msrp: '$28,855',
+    type: 'Hybrid Sedan', year: '2024', msrp: '$28,855', powertrain: 'Hybrid Electric (HEV)',
     get image() { return CAR_PHOTOS['Toyota Camry Hybrid']; }, get thumbnail() { return CAR_PHOTOS['Toyota Camry Hybrid']; },
     bodyColor: '#2d3436', accentColor: '#00b894',
     specs: { range: '686 mi', hp: '225 hp', accel: '7.2s 0-60', weight: '1,665 kg' },
@@ -168,7 +169,7 @@ const CAR_DATABASE = {
     ]
   },
   'Ford F-150 Lightning': {
-    type: 'Electric Pickup', year: '2024', msrp: '$49,995',
+    type: 'Electric Pickup', year: '2024', msrp: '$49,995', powertrain: 'Battery Electric (EV) / ICE Variants Available',
     get image() { return CAR_PHOTOS['Ford F-150 Lightning']; }, get thumbnail() { return CAR_PHOTOS['Ford F-150 Lightning']; },
     bodyColor: '#1e3a5f', accentColor: '#0ea5e9',
     specs: { range: '320 mi', hp: '580 hp', accel: '4.0s 0-60', weight: '2,948 kg' },
@@ -184,7 +185,7 @@ const CAR_DATABASE = {
     ]
   },
   'Lamborghini Urus': {
-    type: 'Super SUV', year: '2024', msrp: '$229,495',
+    type: 'Super SUV', year: '2024', msrp: '$229,495', powertrain: 'Internal Combustion Engine (Petrol)',
     get image() { return CAR_PHOTOS['Lamborghini Urus']; }, get thumbnail() { return CAR_PHOTOS['Lamborghini Urus']; },
     bodyColor: '#0a0a0a', accentColor: '#eab308',
     specs: { range: '381 mi', hp: '657 hp', accel: '3.3s 0-60', weight: '2,150 kg' },
@@ -200,7 +201,7 @@ const CAR_DATABASE = {
     ]
   },
   'Ferrari 458 Italia': {
-    type: 'Supercar', year: '2015', msrp: '$239,340',
+    type: 'Supercar', year: '2015', msrp: '$239,340', powertrain: 'Internal Combustion Engine (Petrol)',
     get image() { return CAR_PHOTOS['Ferrari 458 Italia']; }, get thumbnail() { return CAR_PHOTOS['Ferrari 458 Italia']; },
     bodyColor: '#ef4444', accentColor: '#facc15',
     specs: { range: '— mi', hp: '562 hp', accel: '3.3s 0-60', weight: '1,565 kg' },
@@ -988,6 +989,7 @@ export default function CarStudio() {
             )}
             <div className="px-4 pb-4 space-y-2.5 mt-auto">
               <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-1">Vehicle Status</h3>
+              <StatusCard label="Powertrain Type" status="IDENTIFIED" statusColor="text-indigo-600 bg-indigo-50" date={carData.powertrain || "Unknown"} info={INFO.powertrain} />
               <StatusCard label="EU Battery Passport" status="COMPLIANT" statusColor="text-emerald-600 bg-emerald-50" date="Valid until Dec 2026" info={INFO.eu_passport} />
               <StatusCard label="Recyclability Certificate" status={totalRecyclability > 80 ? 'GRADE A' : 'GRADE B'}
                 statusColor={totalRecyclability > 80 ? 'text-emerald-600 bg-emerald-50' : 'text-amber-600 bg-amber-50'} date={`${totalRecyclability}% avg`} info={INFO.recycl_cert} />
