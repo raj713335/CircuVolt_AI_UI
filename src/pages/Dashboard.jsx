@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart, Bar, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
@@ -28,7 +28,7 @@ const InfoIcon = ({ tooltip }) => {
               if (el) {
                 const btn = el.parentElement.querySelector('button');
                 const r = btn.getBoundingClientRect();
-                el.style.top = `${Math.max(8, r.top - el.offsetHeight - 8)}px`;
+                let topPos = r.top - el.offsetHeight - 8; if (topPos < 8) topPos = r.bottom + 8; el.style.top = `${topPos}px`;
                 el.style.left = `${Math.max(8, Math.min(r.left - 136, window.innerWidth - 296))}px`;
               }
             }}>
@@ -586,3 +586,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

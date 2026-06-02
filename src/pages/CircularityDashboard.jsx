@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Target, Info, Bot, Loader2, CheckCircle, Sparkles, X } from 'lucide-react';
+import { Target, Info, Bot, Loader2, CheckCircle, Sparkles, X, ChevronRight, Zap } from 'lucide-react';
 import { calculateCircularity, streamCircularityAiSummary } from '../services/api';
 import toast from 'react-hot-toast';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 const COLORS = ['#22c55e', '#3b82f6', '#eab308', '#f97316', '#8b5cf6'];
 
@@ -16,8 +16,12 @@ const INFO = {
   circularity_score: "An overall score (0–100) measuring how 'circular' this component is — meaning how well it keeps materials in use, extends product lifetime, avoids carbon emissions, and retains economic value. Higher = more sustainable.",
   material_circularity: "Measures how effectively materials are recovered and reused rather than wasted. Considers recovery rate, material purity, and whether recycled content is used. Max 30 points.",
   lifetime_extension: "Scores how much additional useful life the component gets through reuse or second-life applications. Longer use = fewer new batteries needed = less environmental impact. Max 25 points.",
-  carbon_avoidance: "Measures the environmental benefit in terms of CO₂ emissions prevented through recycling and reuse compared to virgin material production. Max 25 points.",
-  value_retention: "How much economic value is preserved through the recovery process. Higher-grade recovery (reuse > recycle) retains more value. Max 20 points.",
+  carbon_avoidance: "Measures the environmental benefit in terms of CO₂ emissions prevented through recycling and reuse compared to virgin material production. Max 20 points.",
+  value_retention: "How much economic value is preserved through the recovery process. Higher-grade recovery (reuse > recycle) retains more value. Max 15 points.",
+  component_type: "The type of automotive component being assessed.",
+  recycled_content: "The percentage of this component that was originally manufactured using recycled materials.",
+  dfd_rating: "Design for Disassembly (DfD) rating (0-10). Indicates how easily the component can be taken apart using standardized tools and automated robotics. Higher is better.",
+  origin: "Where the component was manufactured. Sourcing locally reduces the significant carbon footprint associated with global supply chain transportation.",
 };
 
 // ── InfoIcon component ──
@@ -40,7 +44,9 @@ const InfoIcon = ({ tooltip }) => {
               if (el) {
                 const btn = el.parentElement.querySelector('button');
                 const r = btn.getBoundingClientRect();
-                el.style.top = `${r.top - el.offsetHeight - 8}px`;
+                let topPos = r.top - el.offsetHeight - 8;
+                if (topPos < 8) topPos = r.bottom + 8;
+                el.style.top = `${topPos}px`;
                 el.style.left = `${Math.max(8, Math.min(r.left + r.width / 2 - 144, window.innerWidth - 296))}px`;
               }
             }}>
@@ -75,12 +81,16 @@ const GaugeCard = ({ label, value, max = 100, color, infoKey }) => {
 
 export default function CircularityDashboard() {
   const [formData, setFormData] = useState({
-    component_id: 'BAT-IND-2026-001',
+    component_id: 'COMP-IND-2026-001',
+    component_type: 'EV Battery Pack',
     soh: 76.4,
     grade: 'B',
     materials_recovered_pct: 80.0,
     carbon_avoided_kg: 750.0,
     second_life_potential: true,
+    recycled_content_pct: 15.0,
+    dfd_rating: 6.5,
+    origin: 'Local',
   });
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -134,6 +144,12 @@ export default function CircularityDashboard() {
     fullMark: 100,
   }));
 
+  const carbonChartData = [
+    { name: 'Virgin Mining', 'CO₂ (kg)': formData.carbon_avoided_kg > 0 ? Math.round(formData.carbon_avoided_kg * 1.5) : 1200, fill: 'url(#colorRed)' },
+    { name: 'Current Assessment', 'CO₂ (kg)': formData.carbon_avoided_kg > 0 ? Math.round(formData.carbon_avoided_kg * 0.3) : 250, fill: 'url(#colorGreen)' },
+    { name: 'Landfill Disposal', 'CO₂ (kg)': formData.carbon_avoided_kg > 0 ? Math.round(formData.carbon_avoided_kg * 2.1) : 1600, fill: 'url(#colorOrange)' },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -146,8 +162,42 @@ export default function CircularityDashboard() {
 
       {/* Input */}
       <div className="bg-white/60 rounded-xl p-6 border border-[#d4c5a9]">
-        <h3 className="text-sm font-medium text-gray-600 mb-4">Component Parameters</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <h3 className="text-sm font-medium text-gray-600 mb-4">Ecosystem Component Parameters</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="md:col-span-2">
+            <label className="flex items-center text-xs text-gray-500 mb-1">
+              Component Type<InfoIcon tooltip={INFO.component_type} />
+            </label>
+            <select value={formData.component_type}
+              onChange={e => setFormData({ ...formData, component_type: e.target.value })}
+              className="w-full bg-white/70 border border-[#d4c5a9] rounded-lg px-3 py-2 text-sm text-gray-800 font-bold">
+              <option value="EV Battery Pack">🔋 EV Battery Pack</option>
+              <option value="Electric Drive Motor">⚙️ Electric Drive Motor</option>
+              <option value="Power Electronics (Inverter)">⚡ Power Electronics (Inverter)</option>
+            </select>
+          </div>
+          <div>
+            <label className="flex items-center text-xs text-gray-500 mb-1">
+              Recycled Content %<InfoIcon tooltip={INFO.recycled_content} />
+            </label>
+            <input type="number" value={formData.recycled_content_pct}
+              onChange={e => setFormData({ ...formData, recycled_content_pct: parseFloat(e.target.value) || 0 })}
+              className="w-full bg-white/70 border border-[#d4c5a9] rounded-lg px-3 py-2 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none" />
+          </div>
+          <div>
+            <label className="flex items-center text-xs text-gray-500 mb-1">
+              Manufacturing Origin<InfoIcon tooltip={INFO.origin} />
+            </label>
+            <select value={formData.origin}
+              onChange={e => setFormData({ ...formData, origin: e.target.value })}
+              className="w-full bg-white/70 border border-[#d4c5a9] rounded-lg px-3 py-2 text-sm text-gray-800">
+              <option value="Local">Local / Domestic</option>
+              <option value="Imported">Imported (Global)</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <label className="flex items-center text-xs text-gray-500 mb-1">
               SOH %<InfoIcon tooltip={INFO.soh} />
@@ -174,6 +224,14 @@ export default function CircularityDashboard() {
           </div>
           <div>
             <label className="flex items-center text-xs text-gray-500 mb-1">
+              DfD Rating (0-10)<InfoIcon tooltip={INFO.dfd_rating} />
+            </label>
+            <input type="number" value={formData.dfd_rating} step="0.5"
+              onChange={e => setFormData({ ...formData, dfd_rating: parseFloat(e.target.value) || 0 })}
+              className="w-full bg-white/70 border border-[#d4c5a9] rounded-lg px-3 py-2 text-sm text-gray-800 focus:border-emerald-400 focus:outline-none" />
+          </div>
+          <div>
+            <label className="flex items-center text-xs text-gray-500 mb-1">
               Grade<InfoIcon tooltip={INFO.grade} />
             </label>
             <select value={formData.grade}
@@ -185,6 +243,7 @@ export default function CircularityDashboard() {
               <option value="D">D - Recycle</option>
             </select>
           </div>
+          
           <div className="flex items-end">
             <label className="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" checked={formData.second_life_potential}
@@ -195,13 +254,13 @@ export default function CircularityDashboard() {
               </span>
             </label>
           </div>
-          <div className="flex items-end md:col-span-3">
+          <div className="flex items-end md:col-span-4">
             <button onClick={handleCalculate} disabled={loading || aiLoading}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-medium py-2.5 px-6 rounded-lg transition-all disabled:opacity-50 shadow-md">
               {loading ? 'Calculating...' : aiLoading ? (
-                <span className="flex items-center justify-center gap-2"><Sparkles className="w-4 h-4 animate-pulse" /> AI Analyzing...</span>
+                <span className="flex items-center justify-center gap-2"><Sparkles className="w-4 h-4 animate-pulse" /> AI Analyzing Ecosystem Impact...</span>
               ) : (
-                <span className="flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> Calculate & Analyze with AI</span>
+                <span className="flex items-center justify-center gap-2"><Sparkles className="w-4 h-4" /> Calculate 6-Axis Circularity with AI</span>
               )}
             </button>
           </div>
@@ -230,11 +289,13 @@ export default function CircularityDashboard() {
                 </div>
               </div>
             </div>
-            <div className="md:col-span-4 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <GaugeCard label="Material Circularity" value={result.breakdown?.breakdown?.material_circularity?.score || 0} max={30} color="#22c55e" infoKey="material_circularity" />
-              <GaugeCard label="Lifetime Extension" value={result.breakdown?.breakdown?.lifetime_extension?.score || 0} max={25} color="#3b82f6" infoKey="lifetime_extension" />
-              <GaugeCard label="Carbon Avoidance" value={result.breakdown?.breakdown?.carbon_avoidance?.score || 0} max={25} color="#8b5cf6" infoKey="carbon_avoidance" />
-              <GaugeCard label="Value Retention" value={result.breakdown?.breakdown?.value_retention?.score || 0} max={20} color="#f97316" infoKey="value_retention" />
+            <div className="md:col-span-4 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              <GaugeCard label="Material Circularity" value={result.breakdown?.breakdown?.material_circularity?.score || 0} max={25} color="#22c55e" infoKey="material_circularity" />
+              <GaugeCard label="Lifetime Extension" value={result.breakdown?.breakdown?.lifetime_extension?.score || 0} max={20} color="#3b82f6" infoKey="lifetime_extension" />
+              <GaugeCard label="Carbon Avoidance" value={result.breakdown?.breakdown?.carbon_avoidance?.score || 0} max={20} color="#8b5cf6" infoKey="carbon_avoidance" />
+              <GaugeCard label="Value Retention" value={result.breakdown?.breakdown?.value_retention?.score || 0} max={15} color="#f97316" infoKey="value_retention" />
+              <GaugeCard label="Manufacturing" value={result.breakdown?.breakdown?.manufacturing_sustainability?.score || 0} max={10} color="#06b6d4" />
+              <GaugeCard label="Disassembly DfD" value={result.breakdown?.breakdown?.design_for_disassembly?.score || 0} max={10} color="#ec4899" />
             </div>
           </div>
 
@@ -287,54 +348,96 @@ export default function CircularityDashboard() {
                 </ResponsiveContainer>
               </div>
             )}
+
+            {result && (
+              <div className="bg-white/60 rounded-xl p-6 border border-[#d4c5a9] md:col-span-2 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4 flex items-center">
+                  ✦ Carbon Impact Comparison<InfoIcon tooltip="Compares the estimated carbon emissions of the current component's recovery pathway versus traditional virgin mining and landfill disposal." />
+                </h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={carbonChartData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id="colorRed" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#fca5a5" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="#ef4444" stopOpacity={1}/>
+                      </linearGradient>
+                      <linearGradient id="colorGreen" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#6ee7b7" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={1}/>
+                      </linearGradient>
+                      <linearGradient id="colorOrange" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#fcd34d" stopOpacity={0.8}/>
+                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" vertical={true} />
+                    <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: '#4b5563', fontWeight: 500 }} width={130} axisLine={false} tickLine={false} />
+                    <Tooltip cursor={{fill: '#f9fafb'}} contentStyle={{ backgroundColor: '#fff', border: 'none', borderRadius: '12px', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }} />
+                    <Bar dataKey="CO₂ (kg)" radius={[0, 6, 6, 0]} barSize={24}>
+                      {
+                        carbonChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.fill} />
+                        ))
+                      }
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
           </div>
 
           {/* AI Summary Report - Streaming */}
           {(aiText || aiLoading) && (
-            <div className="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-purple-200 overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-3 border-b border-purple-200/60 bg-purple-50/50">
-                <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center">
-                  <Bot className="w-3.5 h-3.5 text-white" />
+            <div className="bg-gradient-to-br from-purple-50/80 via-white to-violet-50/80 rounded-2xl border border-purple-100 shadow-sm overflow-hidden mt-6">
+              <div className="flex items-center gap-2 px-6 py-4 border-b border-purple-100/60 bg-white/50 backdrop-blur-sm">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-purple-600 to-violet-400 flex items-center justify-center shadow-md">
+                  <Bot className="w-4 h-4 text-white" />
                 </div>
-                <h4 className="text-sm font-semibold text-purple-800">AI Circularity Summary Report</h4>
+                <h4 className="text-[15px] font-bold text-gray-800 tracking-tight">AI Circularity Summary Report</h4>
                 {aiSource && (
-                  <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ml-2 ${
-                    aiSource === 'llm' ? 'bg-purple-200 text-purple-700' : 'bg-amber-100 text-amber-700'
+                  <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ml-2 shadow-sm ${
+                    aiSource === 'llm' ? 'bg-purple-100 text-purple-700 border border-purple-200' : 'bg-amber-100 text-amber-700 border border-amber-200'
                   }`}>
-                    {aiSource === 'llm' ? '✦ LLM' : '⚙ Rule Engine'}
+                    {aiSource === 'llm' ? '✦ LLM Generated' : '⚙ Rule Engine'}
                   </span>
                 )}
-                {aiLoading && <Loader2 className="w-3.5 h-3.5 text-purple-500 animate-spin ml-auto" />}
-                {aiDone && <CheckCircle className="w-3.5 h-3.5 text-emerald-500 ml-auto" />}
+                {aiLoading && <Loader2 className="w-4 h-4 text-purple-500 animate-spin ml-auto" />}
+                {aiDone && <CheckCircle className="w-4 h-4 text-emerald-500 ml-auto" />}
               </div>
-              <div className="px-5 py-4 text-sm text-gray-700 leading-relaxed max-h-[500px] overflow-y-auto">
+              <div className="px-6 py-5 text-[14px] text-gray-700 leading-relaxed max-h-[600px] overflow-y-auto">
                 {aiText.split('\n').map((line, i) => {
                   if (line.startsWith('**') && line.includes('**')) {
                     const heading = line.replace(/\*\*/g, '');
-                    return <h5 key={i} className="font-bold text-gray-900 mt-4 mb-1.5 text-sm flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />{heading}
+                    return <h5 key={i} className="font-bold text-gray-900 mt-6 mb-2 text-[15px] flex items-center gap-2">
+                      <span className="w-1.5 h-4 rounded-full bg-gradient-to-b from-purple-400 to-violet-500" />
+                      {heading}
                     </h5>;
                   }
                   if (line.startsWith('•')) {
                     return (
-                      <div key={i} className="flex gap-2 items-start ml-2 my-1">
-                        <span className="text-emerald-500 mt-0.5 text-xs font-bold">•</span>
-                        <span className="text-gray-700 text-sm">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
+                      <div key={i} className="flex gap-3 items-start ml-2 my-2.5 bg-white/40 p-2 rounded-lg border border-purple-50/50">
+                        <div className="mt-0.5 w-4 h-4 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle className="w-2.5 h-2.5 text-emerald-600" />
+                        </div>
+                        <span className="text-gray-700">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
                       </div>
                     );
                   }
                   if (line.startsWith('→')) {
                     return (
-                      <div key={i} className="flex gap-2 items-start ml-2 my-1">
-                        <span className="text-purple-500 mt-0.5">→</span>
-                        <span className="text-gray-700 text-sm">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
+                      <div key={i} className="flex gap-3 items-start ml-2 my-2.5 bg-white/40 p-2 rounded-lg border border-purple-50/50">
+                        <div className="mt-0.5 w-4 h-4 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+                          <Zap className="w-2.5 h-2.5 text-violet-600" />
+                        </div>
+                        <span className="text-gray-700">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
                       </div>
                     );
                   }
                   if (line.trim() === '') return <div key={i} className="h-2" />;
-                  return <p key={i} className="text-sm text-gray-700 my-1">{line.replace(/\*\*/g, '').replace(/\*/g, '')}</p>;
+                  return <p key={i} className="text-gray-600 my-2">{line.replace(/\*\*/g, '').replace(/\*/g, '')}</p>;
                 })}
-                {aiLoading && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-0.5 rounded-sm" />}
+                {aiLoading && <span className="inline-block w-2.5 h-4 bg-purple-400 animate-pulse ml-1 rounded-sm align-middle" />}
               </div>
             </div>
           )}
@@ -351,3 +454,4 @@ export default function CircularityDashboard() {
     </div>
   );
 }
+

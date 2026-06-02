@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { Wrench, Lightbulb, AlertCircle, CheckCircle, Sparkles, Bot, Loader2, Shield, Zap, Target, TrendingUp, Info, X, Layers, Gauge, FlaskConical, Tag, Box, Scissors, AlertTriangle } from 'lucide-react';
 import { getDesignSuggestions, streamDesignAiAnalysis } from '../services/api';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart, Pie } from 'recharts';

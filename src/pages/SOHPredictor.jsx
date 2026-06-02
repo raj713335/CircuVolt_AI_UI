@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Battery, AlertTriangle, CheckCircle, Info, Sparkles, Bot, Loader2, X } from 'lucide-react';
 import { predictSOH, getSampleBatteries, streamSohAiSummary } from '../services/api';
 import toast from 'react-hot-toast';
@@ -14,30 +14,30 @@ const gradeLabels = {
   D: 'Recycle - Material Recovery'
 };
 
-// ── Info tooltips ──
+// â”€â”€ Info tooltips â”€â”€
 const INFO = {
-  soh_title: "This tool uses machine learning to predict how healthy an EV battery is (its 'State of Health'). It analyzes sensor data to estimate remaining capacity and assigns a grade (A–D) for the best recovery pathway.",
-  cycle_count: "Number of full charge-discharge cycles the battery has completed. Like an odometer for batteries — higher counts mean more wear. Typical EV batteries last 1000–3000 cycles.",
-  voltage: "Current battery voltage in volts. Healthy lithium cells typically read 3.6–4.2V. Lower voltage can indicate degradation or deep discharge.",
+  soh_title: "This tool uses machine learning to predict how healthy an EV battery is (its 'State of Health'). It analyzes sensor data to estimate remaining capacity and assigns a grade (Aâ€“D) for the best recovery pathway.",
+  cycle_count: "Number of full charge-discharge cycles the battery has completed. Like an odometer for batteries â€” higher counts mean more wear. Typical EV batteries last 1000â€“3000 cycles.",
+  voltage: "Current battery voltage in volts. Healthy lithium cells typically read 3.6â€“4.2V. Lower voltage can indicate degradation or deep discharge.",
   current: "The electrical current flowing through the battery in amperes. Higher current during charging/discharging generates more heat and can accelerate wear.",
-  temperature: "Current operating temperature in °C. Batteries perform best between 20–35°C. Extreme temperatures (hot or cold) accelerate degradation.",
-  charge_capacity: "How much energy the battery can accept during charging (in Ah). This decreases over time as the battery degrades — comparing it to rated capacity shows how much capacity has been lost.",
+  temperature: "Current operating temperature in Â°C. Batteries perform best between 20â€“35Â°C. Extreme temperatures (hot or cold) accelerate degradation.",
+  charge_capacity: "How much energy the battery can accept during charging (in Ah). This decreases over time as the battery degrades â€” comparing it to rated capacity shows how much capacity has been lost.",
   discharge_capacity: "How much energy the battery can deliver during use (in Ah). The gap between charge and discharge capacity indicates internal energy losses.",
   internal_resistance: "Opposition to current flow inside the battery (in milliohms). Higher resistance = more energy lost as heat = less efficient battery. Increases as battery ages.",
   rated_capacity: "The battery's original design capacity when new (in Ah). Used as the baseline to calculate how much capacity has been lost over time.",
   depth_of_discharge: "How deeply the battery is discharged each cycle (as %). Deeper discharges (>80%) stress the battery more and accelerate aging. Shallower cycles extend life.",
-  max_temperature: "Highest temperature the battery has experienced (°C). Temperatures above 40°C cause permanent damage to the electrode materials and electrolyte.",
-  energy_throughput: "Total cumulative energy that has flowed through the battery (in kWh). A measure of total lifetime usage — like 'total kilometers driven' for a car.",
+  max_temperature: "Highest temperature the battery has experienced (Â°C). Temperatures above 40Â°C cause permanent damage to the electrode materials and electrolyte.",
+  energy_throughput: "Total cumulative energy that has flowed through the battery (in kWh). A measure of total lifetime usage â€” like 'total kilometers driven' for a car.",
   predicted_soh: "The AI model's prediction of how much original capacity the battery retains. 100% = like new, 80% = typical retirement threshold for EVs, below 60% = significant degradation.",
-  grade: "A letter grade (A–D) indicating the best recovery pathway:\n• A = Reuse in EVs or premium second-life\n• B = Stationary energy storage\n• C = Module-level refurbishment\n• D = Material recycling",
-  rul: "Remaining Useful Life — estimated number of charge cycles before the battery drops below usable threshold. Helps plan retirement timing and second-life duration.",
+  grade: "A letter grade (Aâ€“D) indicating the best recovery pathway:\nâ€¢ A = Reuse in EVs or premium second-life\nâ€¢ B = Stationary energy storage\nâ€¢ C = Module-level refurbishment\nâ€¢ D = Material recycling",
+  rul: "Remaining Useful Life â€” estimated number of charge cycles before the battery drops below usable threshold. Helps plan retirement timing and second-life duration.",
   confidence: "How confident the AI model is in its prediction. Based on how similar this battery's parameters are to the training data. Higher confidence = more reliable prediction.",
   risk_flags: "Warnings about specific parameters that are outside normal ranges. These flags highlight potential issues that could accelerate degradation or pose safety concerns.",
   shap: "SHAP (SHapley Additive exPlanations) shows which battery parameters had the biggest influence on the SOH prediction. Taller bars = more important factors in determining battery health.",
   recommendation: "The AI's suggested next step based on the battery's health, grade, and risk factors. Could be continued use, second-life application, refurbishment, or recycling.",
 };
 
-// ── InfoIcon component ──
+// â”€â”€ InfoIcon component â”€â”€
 const InfoIcon = ({ tooltip }) => {
   const [show, setShow] = useState(false);
   return (
@@ -57,7 +57,7 @@ const InfoIcon = ({ tooltip }) => {
               if (el) {
                 const btn = el.parentElement.querySelector('button');
                 const r = btn.getBoundingClientRect();
-                el.style.top = `${Math.max(8, r.top - el.offsetHeight - 8)}px`;
+                let topPos = r.top - el.offsetHeight - 8; if (topPos < 8) topPos = r.bottom + 8; el.style.top = `${topPos}px`;
                 el.style.left = `${Math.max(8, Math.min(r.left + r.width / 2 - 144, window.innerWidth - 296))}px`;
               }
             }}>
@@ -80,7 +80,7 @@ const FIELD_INFO_MAP = {
   energy_throughput: 'energy_throughput',
 };
 
-// ── 3D Battery Component ──
+// â”€â”€ 3D Battery Component â”€â”€
 const RealisticBattery3D = ({ isExploded, onSelectPart }) => {
   const groupRef = useRef();
   const explodeFactor = useRef(0);
@@ -140,7 +140,7 @@ const RealisticBattery3D = ({ isExploded, onSelectPart }) => {
       <group 
         ref={coolingRef} 
         position={[0, 0.1, 0]}
-        onClick={(e) => { e.stopPropagation(); onSelectPart('Thermal Management System', 'Active cooling plates and coolant pipes. Maintains optimal 20-35°C operating temperature to prevent thermal runaway and slow down battery aging.'); }}
+        onClick={(e) => { e.stopPropagation(); onSelectPart('Thermal Management System', 'Active cooling plates and coolant pipes. Maintains optimal 20-35Â°C operating temperature to prevent thermal runaway and slow down battery aging.'); }}
         onPointerOver={() => document.body.style.cursor = 'pointer'}
         onPointerOut={() => document.body.style.cursor = 'auto'}
       >
@@ -328,7 +328,7 @@ export default function SOHPredictor() {
                 <Layers className="w-4 h-4 text-emerald-600" />
                 3D Architecture
               </h3>
-              <p className="text-xs text-gray-500 mt-1 hidden sm:block">Drag to rotate • Click parts for info</p>
+              <p className="text-xs text-gray-500 mt-1 hidden sm:block">Drag to rotate â€¢ Click parts for info</p>
             </div>
             <div className="absolute top-4 right-4 z-10">
               <button onClick={() => setIsExploded(!isExploded)}
@@ -373,7 +373,7 @@ export default function SOHPredictor() {
 
           {/* Input Form */}
           <div className="bg-white/60 rounded-xl p-6 border border-[#d4c5a9]">
-          <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">✦ Battery Parameters</h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">âœ¦ Battery Parameters</h3>
           <div className="grid grid-cols-2 gap-3">
             {Object.entries(formData).filter(([k]) => k !== 'component_id').map(([key, value]) => (
               <div key={key}>
@@ -466,7 +466,7 @@ export default function SOHPredictor() {
                 {shapData.length > 0 && (
                   <div className="bg-white/60 rounded-xl p-5 border border-[#d4c5a9]">
                     <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-3 flex items-center">
-                      ✦ Feature Importance (SHAP)<InfoIcon tooltip={INFO.shap} />
+                      âœ¦ Feature Importance (SHAP)<InfoIcon tooltip={INFO.shap} />
                     </h4>
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={shapData} layout="vertical" margin={{ left: 80, right: 10, top: 5, bottom: 5 }}>
@@ -483,7 +483,7 @@ export default function SOHPredictor() {
                 {radarData.length > 0 && (
                   <div className="bg-white/60 rounded-xl p-5 border border-[#d4c5a9]">
                     <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-3 flex items-center">
-                      ✦ Health Radar<InfoIcon tooltip="A visual overview of the battery's health across key dimensions. Points closer to the edge indicate better performance. Identifies weak spots at a glance." />
+                      âœ¦ Health Radar<InfoIcon tooltip="A visual overview of the battery's health across key dimensions. Points closer to the edge indicate better performance. Identifies weak spots at a glance." />
                     </h4>
                     <ResponsiveContainer width="100%" height={200}>
                       <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="70%">
@@ -502,7 +502,7 @@ export default function SOHPredictor() {
                 {/* SoH Degradation Forecast */}
                 <div className="bg-white/60 rounded-xl p-5 border border-[#d4c5a9]">
                   <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-3 flex items-center">
-                    ✦ SoH Degradation Forecast<InfoIcon tooltip="Plots historical capacity fade and projects future Remaining Useful Life (RUL) until End of Life." />
+                    âœ¦ SoH Degradation Forecast<InfoIcon tooltip="Plots historical capacity fade and projects future Remaining Useful Life (RUL) until End of Life." />
                   </h4>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={degradationData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -520,7 +520,7 @@ export default function SOHPredictor() {
                 {/* Discharge Voltage Profile */}
                 <div className="bg-white/60 rounded-xl p-5 border border-[#d4c5a9]">
                   <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-3 flex items-center">
-                    ✦ Discharge Voltage Profile<InfoIcon tooltip="Simulated voltage drop under load (TIEDVD). Degraded batteries show faster voltage collapse due to higher internal resistance and lost capacity." />
+                    âœ¦ Discharge Voltage Profile<InfoIcon tooltip="Simulated voltage drop under load (TIEDVD). Degraded batteries show faster voltage collapse due to higher internal resistance and lost capacity." />
                   </h4>
                   <ResponsiveContainer width="100%" height={220}>
                     <LineChart data={voltageData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
@@ -548,7 +548,7 @@ export default function SOHPredictor() {
                       <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ml-2 ${
                         aiSource === 'llm' ? 'bg-purple-200 text-purple-700' : 'bg-amber-100 text-amber-700'
                       }`}>
-                        {aiSource === 'llm' ? '✦ LLM' : '⚙ Rule Engine'}
+                        {aiSource === 'llm' ? 'âœ¦ LLM' : 'âš™ Rule Engine'}
                       </span>
                     )}
                     {aiLoading && <Loader2 className="w-3.5 h-3.5 text-purple-500 animate-spin ml-auto" />}
@@ -561,18 +561,18 @@ export default function SOHPredictor() {
                           <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />{line.replace(/\*\*/g, '')}
                         </h5>;
                       }
-                      if (line.startsWith('•')) {
+                      if (line.startsWith('â€¢')) {
                         return (
                           <div key={i} className="flex gap-2 items-start ml-2 my-1">
-                            <span className="text-emerald-500 mt-0.5 text-xs font-bold">•</span>
+                            <span className="text-emerald-500 mt-0.5 text-xs font-bold">â€¢</span>
                             <span className="text-gray-700 text-sm">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
                           </div>
                         );
                       }
-                      if (line.startsWith('→')) {
+                      if (line.startsWith('â†’')) {
                         return (
                           <div key={i} className="flex gap-2 items-start ml-2 my-1">
-                            <span className="text-purple-500 mt-0.5">→</span>
+                            <span className="text-purple-500 mt-0.5">â†’</span>
                             <span className="text-gray-700 text-sm">{line.slice(2).replace(/\*\*/g, '').replace(/\*/g, '')}</span>
                           </div>
                         );
@@ -597,3 +597,4 @@ export default function SOHPredictor() {
     </div>
   );
 }
+
