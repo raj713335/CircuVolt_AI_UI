@@ -791,40 +791,43 @@ export default function CarStudio() {
                         <button onClick={() => setShowCompareModal(false)} className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"><X className="w-4 h-4 text-gray-500" /></button>
                       </div>
 
-                      <div className="p-6">
+                      <div className="p-6 bg-gray-50/50">
                         <div className="grid grid-cols-3 gap-6">
                           {/* Headers */}
-                          <div className="space-y-6 pt-16">
-                            <div className="h-10 text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">Overall Recyclability</div>
-                            <div className="h-10 text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">Carbon Footprint</div>
-                            <div className="h-10 text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">Battery Chemistry</div>
-                            <div className="h-10 text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">Est. Recovery Value</div>
-                            <div className="h-10 text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center">Major Components</div>
+                          <div className="space-y-6 pt-20">
+                            <div className="h-10 text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em] flex items-center">Overall Recyclability</div>
+                            <div className="h-10 text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em] flex items-center">Carbon Footprint</div>
+                            <div className="h-10 text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em] flex items-center">Battery Chemistry</div>
+                            <div className="h-10 text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em] flex items-center">Est. Recovery Value</div>
+                            <div className="h-10 text-[11px] font-bold text-gray-500 uppercase tracking-[0.15em] flex items-center">Major Components</div>
                           </div>
                           
                           {/* Vehicle 1 */}
-                          <div className="bg-emerald-50/50 rounded-xl p-5 border border-emerald-100/50">
-                            <div className="flex flex-col items-center mb-6 text-center">
-                              <img src={carData.image || carData.thumbnail} alt={selectedCar} className="w-32 h-20 object-contain drop-shadow-md mb-3" />
-                              <h3 className="font-black text-gray-800 text-lg">{selectedCar}</h3>
-                              <span className="text-xs text-gray-500 font-medium">{carData.type} • {carData.year}</span>
+                          <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-[0_8px_30px_rgb(16,185,129,0.1)] relative overflow-hidden group hover:shadow-[0_8px_40px_rgb(16,185,129,0.15)] transition-shadow">
+                            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
+                            <div className="flex flex-col items-center mb-8 text-center relative z-10">
+                              <div className="w-24 h-16 mb-4 flex items-center justify-center">
+                                <img src={carData.image || carData.thumbnail} alt={selectedCar} className="max-w-full max-h-full object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300" />
+                              </div>
+                              <h3 className="font-sans font-bold text-gray-900 text-lg tracking-tight">{selectedCar}</h3>
+                              <span className="text-[10px] text-gray-400 font-medium tracking-wide uppercase mt-1">{carData.type} • {carData.year}</span>
                             </div>
                             
-                            <div className="space-y-6">
-                              <div className="h-10 flex items-center">
-                                <span className={`text-xl font-black ${totalRecyclability > 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{totalRecyclability}%</span>
+                            <div className="space-y-6 relative z-10">
+                              <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                                <span className={`text-xl font-sans font-extrabold tracking-tight ${totalRecyclability > 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{totalRecyclability}%</span>
                               </div>
-                              <div className="h-10 flex items-center">
-                                <span className="text-lg font-bold text-blue-600">{carData.components.reduce((s, c) => s + parseFloat(c.carbonFootprint), 0).toFixed(1)} tCO2e</span>
+                              <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                                <span className="text-lg font-sans font-bold text-blue-600 tracking-tight">{carData.components.reduce((s, c) => s + parseFloat(c.carbonFootprint), 0).toFixed(1)} tCO2e</span>
                               </div>
-                              <div className="h-10 flex items-center">
-                                <span className="text-sm font-bold text-gray-700 bg-white px-3 py-1.5 rounded-md shadow-sm border border-gray-100">{carData.components.find(c => c.name.includes('Battery'))?.material || 'N/A'}</span>
+                              <div className="h-10 flex items-center justify-center">
+                                <span className="text-xs font-semibold text-gray-700 bg-gray-100 px-3 py-1.5 rounded-full">{carData.components.find(c => c.name.includes('Battery'))?.material || 'N/A'}</span>
                               </div>
-                              <div className="h-10 flex items-center">
-                                <span className="text-lg font-bold text-emerald-600">~ $4,200</span>
+                              <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                                <span className="text-lg font-sans font-bold text-emerald-600 tracking-tight">~ $4,200</span>
                               </div>
-                              <div className="h-10 flex items-center">
-                                <span className="text-sm font-bold text-gray-700">{carData.components.length} Monitored</span>
+                              <div className="h-10 flex items-center justify-center">
+                                <span className="text-xs font-medium text-gray-500">{carData.components.length} Monitored</span>
                               </div>
                             </div>
                           </div>
@@ -836,28 +839,31 @@ export default function CarStudio() {
                             const compareRecyclability = Math.round(compareData.components.reduce((acc, comp) => acc + comp.recyclability, 0) / compareData.components.length);
                             
                             return (
-                              <div className="bg-gray-50 rounded-xl p-5 border border-gray-200/50">
-                                <div className="flex flex-col items-center mb-6 text-center opacity-90">
-                                  <img src={compareData.image || compareData.thumbnail} alt={compareCarName} className="w-32 h-20 object-contain drop-shadow-md mb-3" />
-                                  <h3 className="font-black text-gray-700 text-lg">{compareCarName}</h3>
-                                  <span className="text-xs text-gray-500 font-medium">{compareData.type} • {compareData.year}</span>
+                              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] transition-shadow opacity-90 hover:opacity-100">
+                                <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-gray-300 to-gray-400" />
+                                <div className="flex flex-col items-center mb-8 text-center relative z-10">
+                                  <div className="w-24 h-16 mb-4 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
+                                    <img src={compareData.image || compareData.thumbnail} alt={compareCarName} className="max-w-full max-h-full object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300" />
+                                  </div>
+                                  <h3 className="font-sans font-bold text-gray-700 text-lg tracking-tight">{compareCarName}</h3>
+                                  <span className="text-[10px] text-gray-400 font-medium tracking-wide uppercase mt-1">{compareData.type} • {compareData.year}</span>
                                 </div>
                                 
-                                <div className="space-y-6">
-                                  <div className="h-10 flex items-center">
-                                    <span className={`text-xl font-black ${compareRecyclability > 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{compareRecyclability}%</span>
+                                <div className="space-y-6 relative z-10">
+                                  <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                                    <span className={`text-xl font-sans font-extrabold tracking-tight ${compareRecyclability > 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{compareRecyclability}%</span>
                                   </div>
-                                  <div className="h-10 flex items-center">
-                                    <span className="text-lg font-bold text-blue-600 opacity-90">{compareData.components.reduce((s, c) => s + parseFloat(c.carbonFootprint), 0).toFixed(1)} tCO2e</span>
+                                  <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                                    <span className="text-lg font-sans font-bold text-blue-600 tracking-tight opacity-90">{compareData.components.reduce((s, c) => s + parseFloat(c.carbonFootprint), 0).toFixed(1)} tCO2e</span>
                                   </div>
-                                  <div className="h-10 flex items-center">
-                                    <span className="text-sm font-bold text-gray-600 bg-white px-3 py-1.5 rounded-md shadow-sm border border-gray-100">{compareData.components.find(c => c.name.includes('Battery'))?.material || 'N/A'}</span>
+                                  <div className="h-10 flex items-center justify-center">
+                                    <span className="text-xs font-semibold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">{compareData.components.find(c => c.name.includes('Battery'))?.material || 'N/A'}</span>
                                   </div>
-                                  <div className="h-10 flex items-center">
-                                    <span className="text-lg font-bold text-emerald-600 opacity-90">~ $3,850</span>
+                                  <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
+                                    <span className="text-lg font-sans font-bold text-emerald-600 tracking-tight opacity-90">~ $3,850</span>
                                   </div>
-                                  <div className="h-10 flex items-center">
-                                    <span className="text-sm font-bold text-gray-600">{compareData.components.length} Monitored</span>
+                                  <div className="h-10 flex items-center justify-center">
+                                    <span className="text-xs font-medium text-gray-500">{compareData.components.length} Monitored</span>
                                   </div>
                                 </div>
                               </div>
@@ -865,14 +871,19 @@ export default function CarStudio() {
                           })()}
                         </div>
                         
-                        <div className="mt-8 bg-indigo-50/50 rounded-xl p-4 border border-indigo-100 flex items-start gap-3">
-                          <Bot className="w-5 h-5 text-indigo-500 shrink-0 mt-0.5" />
-                          <div>
-                            <h4 className="text-sm font-bold text-indigo-900 mb-1">AI Circularity Insight</h4>
-                            <p className="text-xs text-indigo-700 leading-relaxed">
-                              The <strong>{selectedCar}</strong> demonstrates superior circularity potential compared to the {carNames.find(c => c !== selectedCar)}, 
+                        <div className="mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-5 shadow-[0_8px_30px_rgb(79,70,229,0.2)] flex items-start gap-4 relative overflow-hidden">
+                          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                            <Sparkles className="w-32 h-32 text-white" />
+                          </div>
+                          <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/10">
+                            <Bot className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="relative z-10 text-white flex-1">
+                            <h4 className="text-sm font-bold mb-1.5 tracking-wide">AI Circularity Insight</h4>
+                            <p className="text-xs text-indigo-50/90 leading-relaxed max-w-3xl">
+                              The <strong className="text-white font-bold">{selectedCar}</strong> demonstrates superior circularity potential compared to the {carNames.find(c => c !== selectedCar)}, 
                               primarily driven by its highly recyclable {carData.components.find(c => c.name.includes('Battery'))?.material || 'battery'} chemistry and easily separable chassis materials. 
-                              Optimizing recovery through pyrometallurgical processing could yield an estimated $4,200 in reclaimed value.
+                              Optimizing recovery through pyrometallurgical processing could yield an estimated <span className="text-emerald-300 font-bold">$4,200</span> in reclaimed value.
                             </p>
                           </div>
                         </div>
