@@ -468,9 +468,9 @@ export default function RecoveryOptimizer() {
             <div>
               <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
                 <Recycle className="w-6 h-6 text-emerald-400" />
-                Target Pathway: {result.strategy.replace(/_/g, ' ')}
+                Target Pathway: {result.strategy ? result.strategy.replace(/_/g, ' ') : (formData.grade === 'A' || formData.grade === 'B' ? 'Direct Reuse / Second Life' : 'Material Recovery')}
               </h2>
-              <p className="text-emerald-100/80 font-medium">{result.primary_action}</p>
+              <p className="text-emerald-100/80 font-medium">{result.primary_action || (formData.grade === 'A' || formData.grade === 'B' ? 'Evaluating module integrity for stationary storage' : 'Executing automated separation protocol')}</p>
             </div>
             <div className="hidden md:flex flex-col items-end">
               <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-900/50 px-3 py-1 rounded-full border border-emerald-500/30">
