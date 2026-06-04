@@ -47,6 +47,36 @@ export const getDashboardSummary = async () => {
   return response.data;
 };
 
+export const generateDisassemblyPlan = async (data) => {
+  const response = await api.post('/disassembly-plan', data);
+  return response.data;
+};
+
+// Disassembly AI Analysis - SSE Streaming
+export const streamDisassemblyAiAnalysis = async (vehicleData, planResult, onEvent) => {
+  const response = await fetch(`${API_BASE}/disassembly-ai-analysis-stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ vehicle_data: vehicleData, plan_result: planResult }),
+  });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try { onEvent(JSON.parse(line.slice(6))); } catch {}
+      }
+    }
+  }
+};
+
 // A2A Protocol - Agent Card
 export const getAgentCard = async () => {
   const response = await api.get('/.well-known/agent.json');

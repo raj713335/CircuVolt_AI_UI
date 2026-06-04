@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Car, Battery, FileText, Recycle, Wrench, BarChart3,
-  ChevronLeft, ChevronRight, Zap, Bot
+  ChevronLeft, ChevronRight, Zap, Bot, Hammer
 } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: Car, label: 'Car Studio' },
   { path: '/dashboard', icon: BarChart3, label: 'Dashboard' },
   { path: '/predict', icon: Battery, label: 'SOH Predictor' },
+  { path: '/disassembly', icon: Hammer, label: 'Disassembly Planner' },
   { path: '/passport', icon: FileText, label: 'Material Passport' },
   { path: '/recovery', icon: Recycle, label: 'Recovery Optimizer' },
   { path: '/circularity', icon: Zap, label: 'Circularity Score' },

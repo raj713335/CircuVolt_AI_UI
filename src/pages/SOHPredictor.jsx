@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Battery, AlertTriangle, CheckCircle, Info, Sparkles, Bot, Loader2, X } from 'lucide-react';
 import { predictSOH, getSampleBatteries, streamSohAiSummary } from '../services/api';
 import toast from 'react-hot-toast';
@@ -429,18 +429,25 @@ export default function SOHPredictor() {
               </div>
 
               {/* Details Row */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-4 gap-4">
                 <div className="bg-white/60 rounded-xl p-4 border border-[#d4c5a9]">
                   <div className="flex items-center text-xs text-gray-500 mb-1">Remaining Life<InfoIcon tooltip={INFO.rul} /></div>
                   <p className="text-xl font-bold text-gray-800">{result.rul_cycles} <span className="text-sm font-normal text-gray-400">cycles</span></p>
+                  <p className="text-xs font-medium text-indigo-500 mt-1">~{result.rul_years_stationary} yrs (Stationary)</p>
+                </div>
+                <div className="bg-white/60 rounded-xl p-4 border border-[#d4c5a9]">
+                  <div className="flex items-center text-xs text-gray-500 mb-1">Safety Status<InfoIcon tooltip="Whether the battery passes industrial safety checks for secondary use." /></div>
+                  <p className={`text-sm font-bold ${result.safety_status.includes('quarantine') ? 'text-red-600' : 'text-emerald-600'}`}>
+                    {result.safety_status.replace(/_/g, ' ').toUpperCase()}
+                  </p>
+                </div>
+                <div className="bg-white/60 rounded-xl p-4 border border-[#d4c5a9]">
+                  <div className="flex items-center text-xs text-gray-500 mb-1">Target Route<InfoIcon tooltip="The industrial pathway recommended based on SOH and Safety status." /></div>
+                  <p className="text-sm font-medium text-emerald-700 capitalize">{result.recommended_route.replace(/_/g, ' ')}</p>
                 </div>
                 <div className="bg-white/60 rounded-xl p-4 border border-[#d4c5a9]">
                   <div className="flex items-center text-xs text-gray-500 mb-1">Confidence<InfoIcon tooltip={INFO.confidence} /></div>
-                  <p className="text-xl font-bold text-gray-800">{result.confidence}</p>
-                </div>
-                <div className="bg-white/60 rounded-xl p-4 border border-[#d4c5a9]">
-                  <div className="flex items-center text-xs text-gray-500 mb-1">Recommendation<InfoIcon tooltip={INFO.recommendation} /></div>
-                  <p className="text-sm font-medium text-emerald-600">{result.recommendation}</p>
+                  <p className="text-xl font-bold text-gray-800">{(result.confidence * 100).toFixed(0)}%</p>
                 </div>
               </div>
 

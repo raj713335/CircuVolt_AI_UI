@@ -463,6 +463,22 @@ export default function RecoveryOptimizer() {
       {result && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
           
+          {/* Pathway Banner */}
+          <div className="bg-gradient-to-r from-emerald-800 to-[#1b2a3d] rounded-xl p-6 border border-emerald-500/30 shadow-lg flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+                <Recycle className="w-6 h-6 text-emerald-400" />
+                Target Pathway: {result.strategy.replace(/_/g, ' ')}
+              </h2>
+              <p className="text-emerald-100/80 font-medium">{result.primary_action}</p>
+            </div>
+            <div className="hidden md:flex flex-col items-end">
+              <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-900/50 px-3 py-1 rounded-full border border-emerald-500/30">
+                Industry Standard Match
+              </span>
+            </div>
+          </div>
+
           {/* Top KPI row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gradient-to-br from-[#1b2a3d] to-[#121c29] rounded-xl p-5 border border-indigo-500/30 shadow-lg relative overflow-hidden">

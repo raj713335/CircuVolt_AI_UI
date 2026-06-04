@@ -9,6 +9,7 @@ import MaterialPassport from './pages/MaterialPassport';
 import RecoveryOptimizer from './pages/RecoveryOptimizer';
 import CircularityDashboard from './pages/CircularityDashboard';
 import DesignAdvisor from './pages/DesignAdvisor';
+import DisassemblyPlanner from './pages/DisassemblyPlanner';
 import './index.css';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<CarStudio />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/predict" element={<SOHPredictor />} />
+          <Route path="/disassembly" element={<DisassemblyPlanner />} />
           <Route path="/passport" element={<MaterialPassport />} />
           <Route path="/recovery" element={<RecoveryOptimizer />} />
           <Route path="/circularity" element={<CircularityDashboard />} />
