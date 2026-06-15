@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Car, Battery, FileText, Recycle, Wrench, BarChart3,
-  ChevronLeft, ChevronRight, Zap, Bot, Hammer
+  ChevronLeft, ChevronRight, Zap, Bot, Hammer, Database
 } from 'lucide-react';
 
 const navItems = [
@@ -14,7 +14,10 @@ const navItems = [
   { path: '/recovery', icon: Recycle, label: 'Recovery Optimizer' },
   { path: '/circularity', icon: Zap, label: 'Circularity Score' },
   { path: '/design', icon: Wrench, label: 'Design Advisor' },
+  { path: '/knowledge-base', icon: Database, label: 'Knowledge Base' },
+  { path: '/agent-builder', icon: Bot, label: 'Agent Builder' },
 ];
+
 
 export default function Layout({ children }) {
   const [collapsed, setCollapsed] = useState(false);

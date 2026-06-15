@@ -528,6 +528,7 @@ export default function CarStudio() {
   const [loadingImages, setLoadingImages] = useState(false);
   const [lightboxImg, setLightboxImg] = useState(null);
   const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareCar, setCompareCar] = useState('');
 
   // Fetch real images from Wikimedia when car changes
   useEffect(() => {
@@ -543,6 +544,10 @@ export default function CarStudio() {
   const allCars = { ...CAR_DATABASE, ...dynamicCars };
   const carNames = Object.keys(allCars);
   const filteredCars = carNames.filter(n => n.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const actualCompareCar = compareCar && compareCar !== selectedCar && allCars[compareCar] 
+    ? compareCar 
+    : carNames.find(c => c !== selectedCar);
 
   const handleSelectCar = (carName) => { setSelectedCar(carName); setSelectedComponent(null); setIsExploded(false); };
 
@@ -756,15 +761,22 @@ export default function CarStudio() {
                 <div className="bg-white/60 rounded-xl p-3 border border-[#d4c5a9]">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 flex items-center">Compare Vehicles<InfoIcon tooltip={INFO.compare} /></h4>
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1.5 flex-1 min-w-0">
-                      <span className="text-sm">🚗</span><span className="text-[10px] font-semibold truncate">{selectedCar}</span>
+                    <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1.5 flex-1 min-w-0 border border-gray-100 shadow-sm">
+                      <span className="text-sm">🚗</span><span className="text-[10px] font-semibold truncate" title={selectedCar}>{selectedCar}</span>
                     </div>
-                    <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold shrink-0">vs</div>
-                    <div className="flex items-center gap-1.5 bg-gray-50 rounded-lg px-2 py-1.5 flex-1 min-w-0">
-                      <span className="text-sm">🚗</span><span className="text-[10px] font-semibold truncate">{carNames.find(c => c !== selectedCar)}</span>
-                    </div>
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-sm">vs</div>
+                    <select
+                      value={actualCompareCar || ''}
+                      onChange={(e) => setCompareCar(e.target.value)}
+                      className="flex-1 min-w-0 bg-white border border-emerald-200 rounded-lg px-2 py-1.5 text-[10px] font-semibold text-emerald-800 outline-none hover:border-emerald-400 focus:ring-1 focus:ring-emerald-400 transition-all cursor-pointer appearance-none shadow-sm truncate"
+                      style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'%2310b981\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 4px center', backgroundSize: '12px' }}
+                    >
+                      {carNames.filter(c => c !== selectedCar).map(c => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
                   </div>
-                  <button onClick={() => setShowCompareModal(true)} className="mt-2 text-[10px] text-emerald-600 hover:text-emerald-700 font-medium">Open Comparison ›</button>
+                  <button onClick={() => setShowCompareModal(true)} className="mt-3 w-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-100 py-2 rounded-lg text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm">Open Comparison <Layers className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
               {/* ── Image Lightbox ── */}
@@ -803,17 +815,27 @@ export default function CarStudio() {
                           </div>
                           
                           {/* Vehicle 1 */}
-                          <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-[0_8px_30px_rgb(16,185,129,0.1)] relative overflow-hidden group hover:shadow-[0_8px_40px_rgb(16,185,129,0.15)] transition-shadow">
+                          <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-[0_8px_30px_rgb(16,185,129,0.1)] relative overflow-hidden group hover:shadow-[0_8px_40px_rgb(16,185,129,0.15)] transition-shadow flex flex-col">
                             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400" />
-                            <div className="flex flex-col items-center mb-8 text-center relative z-10">
+                            <div className="flex flex-col items-center mb-8 text-center relative z-10 flex-1">
                               <div className="w-24 h-16 mb-4 flex items-center justify-center">
                                 <img src={carData.image || carData.thumbnail} alt={selectedCar} className="max-w-full max-h-full object-contain drop-shadow-xl group-hover:scale-110 transition-transform duration-300" />
                               </div>
-                              <h3 className="font-sans font-bold text-gray-900 text-lg tracking-tight">{selectedCar}</h3>
+                              <div className="relative inline-flex items-center justify-center gap-1.5 hover:bg-emerald-50 px-3 py-1.5 -mx-3 rounded-xl cursor-pointer transition-colors group/select">
+                                <select 
+                                  value={selectedCar}
+                                  onChange={(e) => handleSelectCar(e.target.value)}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
+                                >
+                                  {carNames.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <h3 className="font-sans font-bold text-gray-900 text-lg tracking-tight">{selectedCar}</h3>
+                                <ChevronDown className="w-4 h-4 text-emerald-500/50 group-hover/select:text-emerald-600 transition-colors" />
+                              </div>
                               <span className="text-[10px] text-gray-400 font-medium tracking-wide uppercase mt-1">{carData.type} • {carData.year}</span>
                             </div>
                             
-                            <div className="space-y-6 relative z-10">
+                            <div className="space-y-6 relative z-10 mt-auto">
                               <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
                                 <span className={`text-xl font-sans font-extrabold tracking-tight ${totalRecyclability > 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{totalRecyclability}%</span>
                               </div>
@@ -832,24 +854,34 @@ export default function CarStudio() {
                             </div>
                           </div>
 
-                          {/* Vehicle 2 (Compare against first non-selected) */}
+                          {/* Vehicle 2 (Compare against selected) */}
                           {(() => {
-                            const compareCarName = carNames.find(c => c !== selectedCar);
-                            const compareData = CAR_DATABASE[compareCarName] || dynamicCars[compareCarName];
+                            const compareData = allCars[actualCompareCar];
+                            if (!compareData) return null;
                             const compareRecyclability = Math.round(compareData.components.reduce((acc, comp) => acc + comp.recyclability, 0) / compareData.components.length);
                             
                             return (
-                              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] transition-shadow opacity-90 hover:opacity-100">
+                              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative overflow-hidden group hover:shadow-[0_8px_40px_rgb(0,0,0,0.08)] transition-shadow opacity-90 hover:opacity-100 flex flex-col">
                                 <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-gray-300 to-gray-400" />
-                                <div className="flex flex-col items-center mb-8 text-center relative z-10">
+                                <div className="flex flex-col items-center mb-8 text-center relative z-10 flex-1">
                                   <div className="w-24 h-16 mb-4 flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
-                                    <img src={compareData.image || compareData.thumbnail} alt={compareCarName} className="max-w-full max-h-full object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300" />
+                                    <img src={compareData.image || compareData.thumbnail} alt={actualCompareCar} className="max-w-full max-h-full object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300" />
                                   </div>
-                                  <h3 className="font-sans font-bold text-gray-700 text-lg tracking-tight">{compareCarName}</h3>
+                                  <div className="relative inline-flex items-center justify-center gap-1.5 hover:bg-gray-100 px-3 py-1.5 -mx-3 rounded-xl cursor-pointer transition-colors group/select">
+                                    <select 
+                                      value={actualCompareCar}
+                                      onChange={(e) => setCompareCar(e.target.value)}
+                                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none"
+                                    >
+                                      {carNames.filter(c => c !== selectedCar).map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <h3 className="font-sans font-bold text-gray-700 group-hover/select:text-gray-900 text-lg tracking-tight">{actualCompareCar}</h3>
+                                    <ChevronDown className="w-4 h-4 text-gray-400 group-hover/select:text-gray-600 transition-colors" />
+                                  </div>
                                   <span className="text-[10px] text-gray-400 font-medium tracking-wide uppercase mt-1">{compareData.type} • {compareData.year}</span>
                                 </div>
                                 
-                                <div className="space-y-6 relative z-10">
+                                <div className="space-y-6 relative z-10 mt-auto">
                                   <div className="h-10 flex items-center justify-center bg-gray-50/50 rounded-lg">
                                     <span className={`text-xl font-sans font-extrabold tracking-tight ${compareRecyclability > 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{compareRecyclability}%</span>
                                   </div>
@@ -881,9 +913,9 @@ export default function CarStudio() {
                           <div className="relative z-10 text-white flex-1">
                             <h4 className="text-sm font-bold mb-1.5 tracking-wide">AI Circularity Insight</h4>
                             <p className="text-xs text-indigo-50/90 leading-relaxed max-w-3xl">
-                              The <strong className="text-white font-bold">{selectedCar}</strong> demonstrates superior circularity potential compared to the {carNames.find(c => c !== selectedCar)}, 
+                              The <strong className="text-white font-bold">{selectedCar}</strong> demonstrates superior circularity potential compared to the {actualCompareCar}, 
                               primarily driven by its highly recyclable {carData.components.find(c => c.name.includes('Battery'))?.material || 'battery'} chemistry and easily separable chassis materials. 
-                              Optimizing recovery through pyrometallurgical processing could yield an estimated <span className="text-emerald-300 font-bold">$4,200</span> in reclaimed value.
+                              Optimizing recovery through pyrometallurgical processing could yield an estimated <span className="text-emerald-300 font-bold">${(carData.components.reduce((s, c) => s + (parseFloat(c.cost?.replace(/[^0-9.-]+/g,"")) || 0), 0) * 0.35).toLocaleString('en-US', {maximumFractionDigits:0})}</span> in reclaimed value.
                             </p>
                           </div>
                         </div>
