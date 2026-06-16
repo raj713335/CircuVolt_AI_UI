@@ -293,4 +293,86 @@ export const sendA2ATask = async (message, sessionId) => {
   return response.data;
 };
 
+// RAG Knowledge Base Endpoints
+export const getSecuritySettings = async () => {
+  const response = await api.get('/security-settings');
+  return response.data;
+};
+
+export const updateSecuritySettings = async (settings) => {
+  const response = await api.post('/security-settings', settings);
+  return response.data;
+};
+
+export const uploadDocument = async (file, agenticScan = true, wordMasking = true) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('agentic_scan', agenticScan);
+  formData.append('word_masking', wordMasking);
+  const response = await api.post('/upload-document', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const getDocuments = async () => {
+  const response = await api.get('/documents');
+  return response.data;
+};
+
+export const getDocument = async (docId) => {
+  const response = await api.get(`/documents/${docId}`);
+  return response.data;
+};
+
+// Agent Builder Endpoints
+export const getAgents = async () => {
+  const response = await api.get('/agents');
+  return response.data;
+};
+
+export const saveAgent = async (agent) => {
+  const response = await api.post('/agents', agent);
+  return response.data;
+};
+
+export const deleteAgent = async (agentId) => {
+  const response = await api.delete(`/agents/${agentId}`);
+  return response.data;
+};
+
+export const verifyMcpUrl = async (url) => {
+  const response = await api.post('/verify-mcp-url', { url });
+  return response.data;
+};
+
+export const verifyA2aUrl = async (url) => {
+  const response = await api.post('/verify-a2a-url', { url });
+  return response.data;
+};
+
+export const streamAgentTest = async (agentId, message, onEvent) => {
+  const response = await fetch(`${API_BASE}/agents/${agentId}/test-stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message }),
+  });
+  if (!response.ok) throw new Error(`Stream request failed: ${response.status} ${response.statusText}`);
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try { onEvent(JSON.parse(line.slice(6))); } catch {}
+      }
+    }
+  }
+};
+
 export default api;
