@@ -46,5 +46,5 @@ Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
 4. Open your browser and navigate to `http://localhost:5173` to view the app!
 
-## 💡 About the Design
+## About the Design
 The UI emphasizes a premium, highly analytical "dark-mode meets rich-dashboard" aesthetic. The interface relies on polished micro-interactions, clean serif/sans-serif typographic hierarchy, and complex data visualization to make dense battery chemistry data easily understandable.
