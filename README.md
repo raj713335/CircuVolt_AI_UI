@@ -2,7 +2,7 @@
 
 CircuVolt AI is a cutting-edge platform designed to analyze, predict, and optimize the lifecycle of electric vehicle (EV) batteries. By leveraging AI-driven predictive modeling, advanced 3D visualizations, and deep design-for-recyclability algorithms, CircuVolt AI helps engineers, manufacturers, and recyclers maximize battery recovery and align with global circular economy standards (like the EU Battery Regulation).
 
-## 🚀 Key Features
+##  Key Features
 
 * **🚗 Interactive Car Studio**
   Explore a fully interactive, explodable 3D vehicle model built with React Three Fiber. Allows users to visually dissect the EV to identify where key battery components are located.
